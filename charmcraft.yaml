@@ -30,16 +30,10 @@ platforms:
 
 parts:
   charm:
-    plugin: charm
     source: .
-
-# The containers and resources metadata apply to Kubernetes charms only.
-# Remove them if not required.
-
-# Your workload’s containers.
-containers:
-  httpbin:
-    resource: httpbin-image
+    plugin: uv
+    build-snaps:
+    - astral-uv
 
 # This field populates the Resources tab on Charmhub.
 resources:
