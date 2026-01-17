@@ -89,6 +89,14 @@ class WireguardLink(pydantic.BaseModel):
                 result.append(ipaddress.ip_network(ip.strip(), strict=False))
         return result
 
+    @property
+    def interface_name(self) -> str:
+        """Get the WireGuard interface name for this link.
+
+        Returns:
+            The WireGuard interface name.
+        """
+        return f"wg{self.port}"
 
 class _WireguardDbSchema(pydantic.BaseModel):
     """Internal database schema."""

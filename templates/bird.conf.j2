@@ -1,0 +1,47 @@
+router id {{ router_id }};
+
+protocol kernel k4 {
+  ipv4 { import none; export where net !~ [169.254.0.0/16+]; };
+  merge paths yes;
+}
+
+protocol kernel k6 {
+  ipv6 { import none; export all; };
+  merge paths yes;
+}
+
+protocol device {}
+
+protocol ospf v3 OSPF6 {
+  rfc5838 yes;
+  ecmp yes;
+  instance id 0;
+  ipv6 { import all; export none; };
+
+  area 0.0.0.0 {
+{% for interface in interfaces %}
+    interface "{{ interface }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+{% endfor %}
+{% for prefix in ipv6_prefixes %}
+    stubnet {{ prefix }} { cost 10; };
+{% endfor %}
+  };
+}
+
+protocol ospf v3 OSPF4 {
+  rfc5838 yes;
+  ecmp yes;
+  instance id 64;
+  ipv4 { import all; export none; };
+
+  area 0.0.0.0 {
+{% for interface in interfaces %}
+    interface "{{ interface }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+{% endfor %}
+{% for prefix in ipv4_prefixed %}
+    stubnet {{ prefix }} { cost 10; };
+{% endfor %}
+  };
+}
+
+protocol bfd {}

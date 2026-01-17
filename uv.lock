@@ -1593,6 +1593,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "charmlibs-apt" },
     { name = "charmlibs-systemd" },
+    { name = "jinja2" },
     { name = "ops" },
     { name = "pydantic" },
 ]
@@ -1640,6 +1641,7 @@ unit = [
 requires-dist = [
     { name = "charmlibs-apt", specifier = ">=1.0.0.post0" },
     { name = "charmlibs-systemd", specifier = ">=1.0.0" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "ops", specifier = "==3.3.1" },
     { name = "pydantic", specifier = ">=2.12.5" },
 ]

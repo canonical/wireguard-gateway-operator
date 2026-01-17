@@ -5,6 +5,7 @@
 
 import configparser
 import pathlib
+import shutil
 import subprocess
 import textwrap
 
@@ -86,7 +87,7 @@ def _wg_config(interface: wgdb.WireguardLink) -> str:
     
         [Peer]
         PublicKey = {interface.peer_public_key}
-        AllowedIPs = {", ".join(map(str,interface.allowed_ips))}
+        AllowedIPs = 224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64, {", ".join(map(str,interface.allowed_ips))}
         Endpoint = {interface.peer_endpoint}
         PersistentKeepalive = 5
         """
@@ -122,7 +123,8 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
 
 def wireguard_install() -> None:
     """Install WireGuard package."""
-    apt.add_package("wireguard", "wireguard-tools")
+    if not shutil.which("wg-quick"):
+        apt.add_package("wireguard", "wireguard-tools")
 
 
 def wireguard_list() -> list[wgdb.WireguardLink]:
@@ -147,11 +149,10 @@ def wireguard_add(interface: wgdb.WireguardLink, is_provider: bool) -> None:
         interface: The WireGuard interface to add.
         is_provider: Whether this unit is the provider.
     """
-    name = f"wg{interface.port}"
-    wg_quick_config = _WG_QUICK_CONFIG_DIR / f"{name}.conf"
+    wg_quick_config = _WG_QUICK_CONFIG_DIR / f"{interface.interface_name}.conf"
     wg_quick_config.touch(mode=0o600)
     wg_quick_config.write_text(_wg_quick_config(interface, is_provider))
-    service_name = f"wg-quick@{name}"
+    service_name = f"wg-quick@{interface.interface_name}"
     systemd.service_enable(service_name)
     systemd.service_start(service_name)
 
@@ -162,11 +163,10 @@ def wireguard_remove(interface: wgdb.WireguardLink) -> None:
     Args:
         interface: The WireGuard interface to remove.
     """
-    name = f"wg{interface.port}"
-    service_name = f"wg-quick@{name}"
+    service_name = f"wg-quick@{interface.interface_name}"
     systemd.service_stop(service_name)
     systemd.service_disable(service_name)
-    wg_quick_config = _WG_QUICK_CONFIG_DIR / f"{name}.conf"
+    wg_quick_config = _WG_QUICK_CONFIG_DIR / f"{interface.interface_name}.conf"
     wg_quick_config.unlink(missing_ok=True)
 
 
