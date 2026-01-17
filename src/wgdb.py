@@ -26,6 +26,7 @@ A link moves through four states:
 
 import datetime
 import enum
+import ipaddress
 import os
 import pathlib
 import secrets
@@ -59,14 +60,38 @@ class WireguardLink(pydantic.BaseModel):
     opened_at: datetime.datetime | None = None
     closed_at: datetime.datetime | None = None
     public_key: str
+    private_key: str
     port: int
     peer_public_key: str
     peer_endpoint: str | None = None
+    peer_allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network]
+
+    @pydantic.field_validator("peer_allowed_ips", mode="before")
+    @classmethod
+    def _validate_peer_allowed_ips(
+        cls, ips: list[str | ipaddress.IPv4Network | ipaddress.IPv6Network]
+    ) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+        """Validate and convert peer_allowed_ips input.
+
+        Args:
+            ips: peer_allowed_ips input.
+
+        Returns:
+            Verified and converted peer_allowed_ips input.
+        """
+        result = []
+        for ip in ips:
+            if isinstance(ip, ipaddress.IPv4Network) or isinstance(
+                ip, ipaddress.IPv6Network
+            ):
+                result.append(ip)
+            else:
+                result.append(ipaddress.ip_network(ip.strip(), strict=False))
+        return result
 
 
 class _WireguardDbSchema(pydantic.BaseModel):
     """Internal database schema."""
-
     port_counter: int = pydantic.Field(default=_WIREGUARD_PORT_RANGE[0])
     keys: typing.List[WireguardKey] = pydantic.Field(default_factory=list)
     links: typing.List[WireguardLink] = pydantic.Field(default_factory=list)
@@ -74,7 +99,6 @@ class _WireguardDbSchema(pydantic.BaseModel):
 
 class WireguardDb:
     """Persistent storage for WireGuard peer and interface information."""
-
     def __init__(self, file: str):
         """Initialize the database.
 
@@ -251,20 +275,33 @@ class WireguardDb:
             return link.model_copy(deep=True)
         return None
 
-    def add_link(self, *, public_key: str, port: int, peer_public_key: str):
+    def add_link(
+        self,
+        *,
+        public_key: str,
+        port: int,
+        peer_public_key: str,
+        allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
+    ) -> None:
         """Creates a new half open link in the database.
 
         Args:
             public_key: The local public key.
             port: The local listen port.
             peer_public_key: The peer's public key.
+            allowed_ips: The peer's allowed ips.
         """
-        self._data["links"].append(
+        key = self._search_key(public_key)
+        if key is None:
+            raise KeyError("public key not found in the database")
+        self._data.links.append(
             WireguardLink(
                 status=WireguardLinkStatus.HALF_OPEN,
                 public_key=public_key,
+                private_key=key.private_key,
                 port=port,
                 peer_public_key=peer_public_key,
+                peer_allowed_ips=allowed_ips,
             )
         )
         self._save()
