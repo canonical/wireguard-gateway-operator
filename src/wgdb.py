@@ -39,7 +39,6 @@ _WIREGUARD_PORT_RANGE = (50000, 52000)
 
 class WireguardLinkStatus(enum.StrEnum):
     """Enumeration for WireGuard link status."""
-
     HALF_OPEN = "half_open"
     OPEN = "open"
     HALF_CLOSE = "half_close"
@@ -48,9 +47,10 @@ class WireguardLinkStatus(enum.StrEnum):
 
 class WireguardKey(pydantic.BaseModel):
     """WireGuard public/private key pair."""
-
     private_key: str
     public_key: str
+    retired: bool
+    retired_at: datetime.datetime | None = None
 
 
 class WireguardLink(pydantic.BaseModel):
@@ -201,8 +201,21 @@ class WireguardDb:
             private_key: The private key.
         """
         self._data.keys.append(
-            WireguardKey(public_key=public_key, private_key=private_key)
+            WireguardKey(public_key=public_key, private_key=private_key, retired=False)
         )
+        self._save()
+
+    def retire_key(self, public_key: str) -> None:
+        """Marks a key pair as retired in the database.
+
+        Args:
+            public_key: The public key of the pair to retire.
+        """
+        key = self._search_key(public_key)
+        if key is None:
+            raise KeyError("public key not found in the database")
+        key.retired = True
+        key.retired_at = self._utc_now()
         self._save()
 
     def remove_key(self, public_key: str) -> None:

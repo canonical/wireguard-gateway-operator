@@ -8,6 +8,7 @@ import pathlib
 import subprocess
 import textwrap
 
+from charmlibs import apt
 from charmlibs import systemd
 
 import wgdb
@@ -117,6 +118,11 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
             peer_allowed_ips=config.get("Peer", "AllowedIPs").split(","),
         )
     )
+
+
+def wireguard_install() -> None:
+    """Install WireGuard package."""
+    apt.add_package("wireguard", "wireguard-tools")
 
 
 def wireguard_list() -> list[wgdb.WireguardLink]:
