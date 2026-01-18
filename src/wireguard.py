@@ -1,8 +1,9 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """WireGuard module provides programmable interface for managing WireGuard network interfaces."""
 
+import collections
 import configparser
 import pathlib
 import shutil
@@ -16,28 +17,22 @@ import wgdb
 
 _WG_QUICK_CONFIG_DIR = pathlib.Path("/etc/wireguard/")
 
+WireguardKeypair = collections.namedtuple(
+    "WireguardKeyPair", ["private_key", "public_key"]
+)
 
-def generate_private_key() -> str:
+
+def generate_keypair() -> WireguardKeypair:
     """Generate a WireGuard private key.
 
     Returns:
-        str: The generated private key.
+        The generated keypair.
     """
-    return subprocess.check_output(["wg", "genkey"], encoding="ascii").strip()
-
-
-def generate_public_key(private_key: str) -> str:
-    """Generate a WireGuard public key from a private key.
-
-    Args:
-        private_key: The WireGuard private key.
-
-    Returns:
-        str: The generated public key.
-    """
-    return subprocess.check_output(
+    private_key = subprocess.check_output(["wg", "genkey"], encoding="ascii").strip()
+    public_key = subprocess.check_output(
         ["wg", "pubkey"], input=private_key, encoding="ascii"
     ).strip()
+    return WireguardKeypair(private_key, public_key)
 
 
 def _wg_quick_config(interface: wgdb.WireguardLink, is_provider: bool) -> str:

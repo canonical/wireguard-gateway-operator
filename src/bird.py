@@ -1,4 +1,4 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Bird module provides programmable interface for managing BIRD internet routing daemon."""
@@ -19,7 +19,7 @@ _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
 
 
 def bird_install():
-    """Install BIRD using apt module."""
+    """Install BIRD using apt if not installed."""
     if not shutil.which("birdc"):
         apt.add_package("bird2")
 

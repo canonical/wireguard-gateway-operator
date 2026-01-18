@@ -1,4 +1,4 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """WireGuard Database (wgdb) provides persistent storage for WireGuard peer and interface
@@ -39,6 +39,7 @@ _WIREGUARD_PORT_RANGE = (50000, 52000)
 
 class WireguardLinkStatus(enum.StrEnum):
     """Enumeration for WireGuard link status."""
+
     HALF_OPEN = "half_open"
     OPEN = "open"
     HALF_CLOSE = "half_close"
@@ -47,15 +48,19 @@ class WireguardLinkStatus(enum.StrEnum):
 
 class WireguardKey(pydantic.BaseModel):
     """WireGuard public/private key pair."""
+
+    owner: int
     private_key: str
     public_key: str
     retired: bool
+    added_at: datetime.datetime
     retired_at: datetime.datetime | None = None
 
 
 class WireguardLink(pydantic.BaseModel):
     """WireGuard link information."""
 
+    owner: int
     status: WireguardLinkStatus
     opened_at: datetime.datetime | None = None
     closed_at: datetime.datetime | None = None
@@ -98,8 +103,10 @@ class WireguardLink(pydantic.BaseModel):
         """
         return f"wg{self.port}"
 
+
 class _WireguardDbSchema(pydantic.BaseModel):
     """Internal database schema."""
+
     port_counter: int = pydantic.Field(default=_WIREGUARD_PORT_RANGE[0])
     keys: typing.List[WireguardKey] = pydantic.Field(default_factory=list)
     links: typing.List[WireguardLink] = pydantic.Field(default_factory=list)
@@ -107,7 +114,8 @@ class _WireguardDbSchema(pydantic.BaseModel):
 
 class WireguardDb:
     """Persistent storage for WireGuard peer and interface information."""
-    def __init__(self, file: str):
+
+    def __init__(self, file: str | pathlib.Path):
         """Initialize the database.
 
         Args:
@@ -170,6 +178,24 @@ class WireguardDb:
             "all ports in the configured WireGuard port range are already in use"
         )
 
+    def list_keys(
+        self, owner: int, include_retired: bool = False
+    ) -> list[WireguardKey]:
+        """Lists all key pairs for a given owner.
+
+        Args:
+            owner: The id of the relation owning the keys.
+            include_retired: Whether to include retired keys.
+
+        Returns:
+            A list of WireguardKey objects.
+        """
+        return [
+            key.model_copy(deep=True)
+            for key in self._data.keys
+            if key.owner == owner and (include_retired or not key.retired)
+        ]
+
     def _search_key(self, public_key: str) -> WireguardKey | None:
         """Search for a key pair in database.
 
@@ -201,15 +227,22 @@ class WireguardDb:
             return key.model_copy(deep=True)
         return None
 
-    def add_key(self, *, public_key: str, private_key: str) -> None:
+    def add_key(self, *, owner: int, public_key: str, private_key: str) -> None:
         """Adds a new key pair to the database.
 
         Args:
+            owner: The id of the relation owning this key.
             public_key: The public key.
             private_key: The private key.
         """
         self._data.keys.append(
-            WireguardKey(public_key=public_key, private_key=private_key, retired=False)
+            WireguardKey(
+                owner=owner,
+                public_key=public_key,
+                private_key=private_key,
+                retired=False,
+                added_at=self._utc_now(),
+            )
         )
         self._save()
 
@@ -296,33 +329,68 @@ class WireguardDb:
             return link.model_copy(deep=True)
         return None
 
-    def add_link(
+    def list_link(
+        self,
+        owner: int,
+        include_closed: bool = False,
+        include_half_closed: bool = False,
+    ) -> list[WireguardLink]:
+        """Lists all links for a given owner.
+
+        Args:
+            owner: The id of the relation owning the links.
+            include_closed: Whether to include closed links.
+            include_half_closed: Whether to include half-closed links.
+
+        Returns:
+            A list of WireguardLink objects.
+        """
+        return [
+            link.model_copy(deep=True)
+            for link in self._data.links
+            if link.owner == owner
+            and (include_closed or link.status != WireguardLinkStatus.CLOSE)
+            and (include_half_closed or link.status != WireguardLinkStatus.HALF_CLOSE)
+        ]
+
+    def open_link(
         self,
         *,
+        owner: int,
         public_key: str,
         port: int,
         peer_public_key: str,
         allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
+        peer_endpoint: str | None = None,
     ) -> None:
         """Creates a new half open link in the database.
 
         Args:
+            owner: The id of the relation owning this link.
             public_key: The local public key.
             port: The local listen port.
             peer_public_key: The peer's public key.
             allowed_ips: The peer's allowed ips.
+            peer_endpoint: The endpoint address of the peer.
         """
         key = self._search_key(public_key)
         if key is None:
             raise KeyError("public key not found in the database")
         self._data.links.append(
             WireguardLink(
-                status=WireguardLinkStatus.HALF_OPEN,
+                owner=owner,
+                status=(
+                    WireguardLinkStatus.HALF_OPEN
+                    if not peer_endpoint
+                    else WireguardLinkStatus.OPEN
+                ),
+                opened_at=self._utc_now(),
                 public_key=public_key,
                 private_key=key.private_key,
                 port=port,
                 peer_public_key=peer_public_key,
                 peer_allowed_ips=allowed_ips,
+                peer_endpoint=peer_endpoint,
             )
         )
         self._save()
@@ -342,22 +410,28 @@ class WireguardDb:
         """
         link = self._must_search_link(public_key, peer_public_key)
         link.status = WireguardLinkStatus.OPEN
-        link.opened_at = self._utc_now()
         link.peer_endpoint = peer_endpoint
         self._save()
 
-    def close_link(self, public_key: str, peer_public_key: str) -> None:
+    def close_link(
+        self, public_key: str, peer_public_key: str, acknowledged: bool = False
+    ) -> None:
         """Transitions a link to half close state.
 
         Args:
             public_key: The local public key.
             peer_public_key: The peer's public key.
+            acknowledged: Whether the close is already acknowledged by the peer.
 
         Raises:
             KeyError: If the link is not found.
         """
         link = self._must_search_link(public_key, peer_public_key)
-        link.status = WireguardLinkStatus.HALF_CLOSE
+        link.status = (
+            WireguardLinkStatus.HALF_CLOSE
+            if not acknowledged
+            else WireguardLinkStatus.CLOSE
+        )
         link.closed_at = self._utc_now()
         self._save()
 
@@ -388,3 +462,35 @@ class WireguardDb:
             if l.public_key == public_key and l.peer_public_key == peer_public_key
         ]
         self._save()
+
+    def update_link(
+        self,
+        public_key: str,
+        peer_public_key: str,
+        peer_endpoint: str | None = None,
+        peer_allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = None,
+    ) -> None:
+        """Update link information in the database.
+
+        Args:
+            public_key: The local public key.
+            peer_public_key: The peer's public key.
+            peer_endpoint: The endpoint address of the peer.
+            peer_allowed_ips: The peer's allowed ips.
+        """
+        link = self._must_search_link(
+            public_key=public_key, peer_public_key=peer_public_key
+        )
+        changed = False
+        if peer_endpoint is not None and link.peer_endpoint != peer_endpoint:
+            if not link.peer_endpoint:
+                raise ValueError(
+                    "cannot set peer_endpoint on half-open link, use acknowledge_open_link instead"
+                )
+            link.peer_endpoint = peer_endpoint
+            changed = True
+        if peer_allowed_ips is not None and link.peer_allowed_ips != peer_allowed_ips:
+            link.peer_allowed_ips = peer_allowed_ips
+            changed = True
+        if changed:
+            self._save()

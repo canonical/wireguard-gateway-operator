@@ -1,37 +1,54 @@
 #!/usr/bin/env python3
 
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-# Learn more at: https://documentation.ubuntu.com/juju/3.6/howto/manage-charms/#build-a-charm
+"""WireGuard gateway charm service."""
 
-"""Charm the service.
-
-Refer to the following post for a quick-start guide that will help you
-develop a new k8s charm using the Operator Framework:
-
-https://discourse.charmhub.io/t/4208
-"""
-
+import ipaddress
 import logging
+import pathlib
 import typing
 
 import ops
-from ops import pebble
 
-# Log messages can be retrieved using juju debug-log
+import relations
+import wgdb
+import wireguard
+from wgdb import WireguardLinkStatus
+
 logger = logging.getLogger(__name__)
 
-VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
+_WGDB_DIR = pathlib.Path("/opt/wireguard-gateway/")
+_WIREGUARD_ROUTER_PROVIDER_RELATION = "provide-wireguard-router"
+_WIREGUARD_ROUTER_REQUIRER_RELATION = "require-wireguard-router"
+
+
+def join_host_port(host: str, port: int) -> str:
+    """Join host and port into a string:
+
+    Args:
+        host: Hostname or IP address.
+        port: Port number.
+
+    Returns:
+        Joined host:port string.
+    """
+    h = host.strip()
+    if h.startswith("[") and h.endswith("]"):
+        return f"{h}:{port}"
+    try:
+        ip = ipaddress.ip_address(h)
+    except ValueError:
+        return f"{h}:{port}"
+    else:
+        if ip.version == 6:
+            return f"[{h}]:{port}"
+        return f"{h}:{port}"
 
 
 class Charm(ops.CharmBase):
-    """Charm implementing holistic reconciliation pattern.
-
-    The holistic pattern centralizes all state reconciliation logic into a single
-    reconcile method that is called from all event handlers. This ensures consistency
-    and reduces code duplication.
-    """
+    """WireGuard gateway charm service."""
 
     def __init__(self, *args: typing.Any):
         """Construct.
@@ -40,65 +57,226 @@ class Charm(ops.CharmBase):
             args: Arguments passed to the CharmBase parent constructor.
         """
         super().__init__(*args)
-        self.framework.observe(self.on.httpbin_pebble_ready, self._on_httpbin_pebble_ready)
-        self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self._wgdb = self._create_wgdb()
+        self.framework.observe(self.on.config_changed, self.reconcile)
 
-    def reconcile(self) -> None:
-        """Holistic reconciliation method.
+    def _create_wgdb(self):
+        """Create WireGuard database if not exists."""
+        file = _WGDB_DIR / f"{self.unit.name.replace('/', '-')}.json"
+        file.parent.mkdir(parents=True, exist_ok=True)
+        return wgdb.WireguardDb(file=file)
 
-        This method contains all the logic needed to reconcile the charm state.
-        It is idempotent and can be called from any event handler.
+    def reconcile(self, event: ops.EventBase) -> None:
+        """Reconcile callback."""
+        self._reconcile()
 
-        Learn more about interacting with Pebble at
-        https://documentation.ubuntu.com/juju/3.6/reference/pebble/
-        """
-        # Validate configuration
-        log_level = str(self.model.config["log-level"]).lower()
-        if log_level not in VALID_LOG_LEVELS:
-            self.unit.status = ops.BlockedStatus(f"invalid log level: '{log_level}'")
+    def _reconcile(self) -> None:
+        """Holistic reconciliation method."""
+        for relation in self.model.relations[_WIREGUARD_ROUTER_PROVIDER_RELATION]:
+            self._reconcile_relation(relation, is_provider=True)
+        for relation in self.model.relations[_WIREGUARD_ROUTER_REQUIRER_RELATION]:
+            self._reconcile_relation(relation, is_provider=False)
+
+    def _reconcile_relation(self, relation: ops.Relation, is_provider: bool) -> None:
+        """Holistic reconciliation method for one relation."""
+        data = relations.WireguardRouterRelation.from_relation(
+            charm=self, relation=relation, is_provider=is_provider
+        )
+        self._relation_add_keys(data)
+        self._relation_add_links(data)
+        self._relation_update_links(data)
+        self._relation_sync_db(data)
+
+    def _relation_add_keys(self, relation: relations.WireguardRouterRelation) -> None:
+        while len(self._wgdb.list_keys(relation.id)) < self.config.get("tunnels"):
+            keypair = wireguard.generate_keypair()
+            self._wgdb.add_key(
+                owner=relation.id,
+                public_key=keypair.public_key,
+                private_key=keypair.private_key,
+            )
+
+    def _relation_add_links(self, relation: relations.WireguardRouterRelation) -> None:
+        for unit in relation.remote_data:
+            # initiate new links
+            for key in self._wgdb.list_keys(relation.id):
+                # requirer side don't initiate links
+                if not relation.is_provider:
+                    continue
+                # if the key has been used in a link with that remote unit, skip it
+                if any(
+                    self._wgdb.search_link(
+                        public_key=key.public_key, peer_public_key=peer_key
+                    )
+                    for peer_key in unit.public_keys
+                ):
+                    continue
+                # try to find a peer key that had not yet been used in a link with myself
+                # and then form a link with that key
+                for peer_key in unit.public_keys:
+                    if any(
+                        self._wgdb.search_link(
+                            public_key=key.public_key, peer_public_key=peer_key
+                        )
+                        for key in self._wgdb.list_keys(relation.id)
+                    ):
+                        continue
+                    port = self._wgdb.allocate_port()
+                    self._wgdb.open_link(
+                        owner=relation.id,
+                        public_key=key.public_key,
+                        port=port,
+                        peer_public_key=peer_key,
+                        allowed_ips=unit.advertise_prefixes,
+                    )
+                    break
+            # acknowledge incoming links
+            for link in unit.listen_ports:
+                if not any(
+                    link.peer_public_key == k.public_key
+                    for k in self._wgdb.list_keys(relation.id)
+                ):
+                    # link is not for myself
+                    continue
+                half_open_link = self._wgdb.search_link(
+                    link.peer_public_key, link.public_key
+                )
+                endpoint = join_host_port(unit.ingress_address, link.port)
+                if not half_open_link:
+                    port = self._wgdb.allocate_port()
+                    self._wgdb.open_link(
+                        owner=relation.id,
+                        public_key=link.peer_public_key,
+                        port=port,
+                        peer_public_key=link.public_key,
+                        allowed_ips=unit.advertise_prefixes,
+                        peer_endpoint=endpoint,
+                    )
+                else:
+                    self._wgdb.acknowledge_open_link(
+                        public_key=link.peer_public_key,
+                        peer_public_key=link.public_key,
+                        peer_endpoint=endpoint,
+                    )
+
+    def _relation_update_links(
+        self, relation: relations.WireguardRouterRelation
+    ) -> None:
+        for link in self._wgdb.list_link(owner=relation.id, include_half_closed=True):
+            unit = relation.search_unit(public_key=link.peer_public_key)
+            listen_port = (
+                unit.lookup_listen_port(
+                    public_key=link.peer_public_key,
+                    peer_public_key=link.public_key,
+                )
+                if unit
+                else None
+            )
+            if unit and listen_port:
+                self._wgdb.update_link(
+                    public_key=link.public_key,
+                    peer_public_key=link.peer_public_key,
+                    peer_endpoint=join_host_port(
+                        unit.ingress_address, listen_port.port
+                    ),
+                    peer_allowed_ips=unit.advertise_prefixes,
+                )
+            match link.status:
+                case WireguardLinkStatus.HALF_OPEN:
+                    self._relation_update_half_open_link(relation=relation, link=link)
+                case WireguardLinkStatus.OPEN:
+                    self._relation_update_open_link(relation=relation, link=link)
+                case WireguardLinkStatus.HALF_CLOSE:
+                    self._relation_update_half_close_link(relation=relation, link=link)
+
+    def _relation_update_half_open_link(
+        self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
+    ) -> None:
+        self._close_link_without_public_key(relation, link)
+
+        for unit in relation.remote_data:
+            for listen_port in unit.listen_ports:
+                if (
+                    listen_port.peer_public_key != link.public_key
+                    or listen_port.public_key != link.peer_public_key
+                ):
+                    continue
+                self._wgdb.acknowledge_open_link(
+                    public_key=link.public_key,
+                    peer_public_key=link.peer_public_key,
+                    peer_endpoint=join_host_port(
+                        unit.ingress_address, listen_port.port
+                    ),
+                )
+                return
+
+    def _relation_update_open_link(
+        self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
+    ) -> None:
+        self._close_link_without_public_key(relation, link)
+        self._close_link_without_listen_port(relation, link)
+
+        key = self._wgdb.search_key(public_key=link.public_key)
+        if key.retired:
+            self._wgdb.close_link(
+                public_key=link.public_key,
+                peer_public_key=link.peer_public_key,
+            )
+
+    def _relation_update_half_close_link(
+        self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
+    ) -> None:
+        self._close_link_without_public_key(relation, link)
+        self._close_link_without_listen_port(relation, link)
+
+    def _close_link_without_public_key(
+        self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
+    ) -> None:
+        remote_public_keys = []
+        for unit in relation.remote_data:
+            remote_public_keys.extend(unit.public_keys)
+
+        if link.peer_public_key not in remote_public_keys:
+            self._wgdb.close_link(
+                public_key=link.public_key,
+                peer_public_key=link.peer_public_key,
+                acknowledged=True,
+            )
             return
 
-        # Get container
-        container = self.unit.get_container("httpbin")
-        if not container.can_connect():
-            self.unit.status = ops.WaitingStatus("waiting for Pebble API")
+    def _close_link_without_listen_port(
+        self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
+    ) -> None:
+        found = False
+        for unit in relation.remote_data:
+            for listen_port in unit.listen_ports:
+                if (
+                    listen_port.peer_public_key == link.public_key
+                    and listen_port.public_key == link.peer_public_key
+                ):
+                    found = True
+        if not found:
+            self._wgdb.close_link(
+                public_key=link.public_key,
+                peer_public_key=link.peer_public_key,
+                acknowledged=False,
+            )
             return
 
-        # Configure and ensure workload is running
-        container.add_layer("httpbin", self._pebble_layer, combine=True)
-        container.replan()
-
-        logger.debug("Workload reconciled with log level: %s", log_level)
-        # Learn more about statuses in the SDK docs:
-        # https://documentation.ubuntu.com/juju/latest/reference/status/index.html
-        self.unit.status = ops.ActiveStatus()
-
-    def _on_httpbin_pebble_ready(self, _: ops.PebbleReadyEvent) -> None:
-        """Handle httpbin pebble ready event."""
-        self.reconcile()
-
-    def _on_config_changed(self, _: ops.ConfigChangedEvent) -> None:
-        """Handle changed configuration."""
-        self.reconcile()
-
-    @property
-    def _pebble_layer(self) -> pebble.LayerDict:
-        """Return a dictionary representing a Pebble layer."""
-        return {
-            "summary": "httpbin layer",
-            "description": "pebble config layer for httpbin",
-            "services": {
-                "httpbin": {
-                    "override": "replace",
-                    "summary": "httpbin",
-                    "command": "gunicorn -b 0.0.0.0:80 httpbin:app -k gevent",
-                    "startup": "enabled",
-                    "environment": {
-                        "GUNICORN_CMD_ARGS": f"--log-level {self.model.config['log-level']}"
-                    },
-                }
-            },
-        }
+    def _relation_sync_db(self, relation: relations.WireguardRouterRelation) -> None:
+        relation.set_public_key(
+            [k.public_key for k in self._wgdb.list_keys(relation.id)]
+        )
+        relation.set_listen_ports(
+            [
+                relations.WireguardRouterListenPort(
+                    public_key=link.public_key,
+                    peer_public_key=link.peer_public_key,
+                    port=link.port,
+                )
+                for link in self._wgdb.list_link(relation.id)
+            ]
+        )
 
 
 if __name__ == "__main__":  # pragma: nocover
