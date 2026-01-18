@@ -259,7 +259,7 @@ class Charm(ops.CharmBase):
             self._wgdb.close_link(
                 public_key=link.public_key,
                 peer_public_key=link.peer_public_key,
-                acknowledged=False,
+                acknowledged=True,
             )
             return
 
