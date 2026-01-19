@@ -21,6 +21,7 @@ jobs:
       self-hosted-runner: false
       self-hosted-runner-label: "edge"
       juju-channel: ${{ matrix.juju-channel }}
+      provider: 'lxd'
       with-uv: true
   allure-report:
     if: always() && !cancelled()
