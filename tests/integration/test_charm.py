@@ -44,7 +44,7 @@ def wait_for_bird_route(
         )
         logger.info(f"route on {unit}: {all_route}")
         bird_route = [route for route in all_route if route["protocol"] == "bird"]
-        if bird_route and bird_route[0]["nexthops"] >= nexthops:
+        if bird_route and len(bird_route[0]["nexthops"]) >= nexthops:
             return bird_route
         else:
             time.sleep(3)
