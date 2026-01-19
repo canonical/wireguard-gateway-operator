@@ -1,0 +1,2 @@
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju add-model --no-switch jubilant-e5632da5
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju deploy --model jubilant-e5632da5 . wireguard-a --config advertise-prefixes=192.0.2.0/24 --num-units 2

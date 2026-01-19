@@ -1,0 +1,2 @@
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju status --model jubilant-e5632da5 --format json
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju debug-log --model jubilant-e5632da5 --limit 1000
