@@ -139,7 +139,9 @@ class WireguardDb:
             Loaded database schema.
         """
         if self.file.exists():
-            return _WireguardDbSchema.model_validate_json(self.file.read_text(encoding="utf-8"))
+            return _WireguardDbSchema.model_validate_json(
+                self.file.read_text(encoding="utf-8")
+            )
         else:
             return _WireguardDbSchema()
 
@@ -177,9 +179,24 @@ class WireguardDb:
                 continue
             self._data.port_counter = port
             return port
-        raise ValueError("all ports in the configured WireGuard port range are already in use")
+        raise ValueError(
+            "all ports in the configured WireGuard port range are already in use"
+        )
 
-    def list_keys(self, owner: int, include_retired: bool = False) -> list[WireguardKey]:
+    def list_owners(self) -> list[int]:
+        """List all active owners stored in the database."""
+        owners = set()
+        for key in self.list_keys():
+            owners.add(key.owner)
+
+        for link in self.list_link(include_half_closed=True):
+            owners.add(link.owner)
+
+        return list(owners)
+
+    def list_keys(
+        self, owner: int | None = None, include_retired: bool = False
+    ) -> list[WireguardKey]:
         """Lists all key pairs for a given owner.
 
         Args:
@@ -192,7 +209,8 @@ class WireguardDb:
         return [
             key.model_copy(deep=True)
             for key in self._data.keys
-            if key.owner == owner and (include_retired or not key.retired)
+            if (owner is None or key.owner == owner)
+            and (include_retired or not key.retired)
         ]
 
     def _search_key(self, public_key: str) -> WireguardKey | None:
@@ -267,7 +285,9 @@ class WireguardDb:
         self._data.keys = [k for k in self._data.keys if k.public_key == public_key]
         self._save()
 
-    def _search_link(self, public_key: str, peer_public_key: str) -> WireguardLink | None:
+    def _search_link(
+        self, public_key: str, peer_public_key: str
+    ) -> WireguardLink | None:
         """Search for a link in database.
 
         The returned link object is a reference to the object inside the database. modifying it
@@ -281,7 +301,10 @@ class WireguardDb:
             The link object if found, None otherwise.
         """
         for link in self._data.links:
-            if link.public_key == public_key and link.peer_public_key == peer_public_key:
+            if (
+                link.public_key == public_key
+                and link.peer_public_key == peer_public_key
+            ):
                 return link
         return None
 
@@ -306,7 +329,9 @@ class WireguardDb:
             raise KeyError("link not found in the database")
         return link
 
-    def search_link(self, public_key: str, peer_public_key: str) -> WireguardLink | None:
+    def search_link(
+        self, public_key: str, peer_public_key: str
+    ) -> WireguardLink | None:
         """Searches for a link by local and peer public keys.
 
         Args:
@@ -420,7 +445,9 @@ class WireguardDb:
         """
         link = self._must_search_link(public_key, peer_public_key)
         link.status = (
-            WireguardLinkStatus.HALF_CLOSE if not acknowledged else WireguardLinkStatus.CLOSE
+            WireguardLinkStatus.HALF_CLOSE
+            if not acknowledged
+            else WireguardLinkStatus.CLOSE
         )
         link.closed_at = self._utc_now()
         self._save()
@@ -458,7 +485,9 @@ class WireguardDb:
         public_key: str,
         peer_public_key: str,
         peer_endpoint: str | None = None,
-        peer_allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None = None,
+        peer_allowed_ips: (
+            list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None
+        ) = None,
     ) -> None:
         """Update link information in the database.
 
@@ -468,7 +497,9 @@ class WireguardDb:
             peer_endpoint: The endpoint address of the peer.
             peer_allowed_ips: The peer's allowed ips.
         """
-        link = self._must_search_link(public_key=public_key, peer_public_key=peer_public_key)
+        link = self._must_search_link(
+            public_key=public_key, peer_public_key=peer_public_key
+        )
         changed = False
         if peer_endpoint is not None and link.peer_endpoint != peer_endpoint:
             if not link.peer_endpoint:
