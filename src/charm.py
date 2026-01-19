@@ -103,9 +103,7 @@ class Charm(ops.CharmBase):
             try:
                 prefixes.append(ipaddress.ip_network(prefix, strict=False))
             except ValueError:
-                raise InvalidConfigError(
-                    "invalid advertise-prefixes: not a ipv4 or ipv6 prefix"
-                )
+                raise InvalidConfigError("invalid advertise-prefixes: not a ipv4 or ipv6 prefix")
         if not prefixes:
             raise InvalidConfigError("no advertise-prefixes configured")
         return prefixes
@@ -133,9 +131,7 @@ class Charm(ops.CharmBase):
         try:
             self._reconcile()
             advertise_prefixes = ", ".join(map(str, self.get_advertise_prefixes()))
-            self.unit.status = ops.ActiveStatus(
-                f"advertising prefixes: {advertise_prefixes}"
-            )
+            self.unit.status = ops.ActiveStatus(f"advertising prefixes: {advertise_prefixes}")
         except InvalidRelationDataError as exc:
             self.unit.status = ops.BlockedStatus(str(exc))
         except InvalidConfigError as exc:
@@ -164,9 +160,7 @@ class Charm(ops.CharmBase):
             except InvalidRelationDataError:
                 invalid_relations.append(relation)
 
-        removed_relations = [
-            i for i in self._wgdb.list_owners() if i not in provider_map
-        ]
+        removed_relations = [i for i in self._wgdb.list_owners() if i not in provider_map]
         for removed_relation in removed_relations:
             self._relation_removed(removed_relation)
 
@@ -210,9 +204,7 @@ class Charm(ops.CharmBase):
                     continue
                 # if the key has been used in a link with that remote unit, skip it
                 if any(
-                    self._wgdb.search_link(
-                        public_key=key.public_key, peer_public_key=peer_key
-                    )
+                    self._wgdb.search_link(public_key=key.public_key, peer_public_key=peer_key)
                     for peer_key in unit.public_keys
                 ):
                     continue
@@ -220,9 +212,7 @@ class Charm(ops.CharmBase):
                 # and then form a link with that key
                 for peer_key in unit.public_keys:
                     if any(
-                        self._wgdb.search_link(
-                            public_key=key.public_key, peer_public_key=peer_key
-                        )
+                        self._wgdb.search_link(public_key=key.public_key, peer_public_key=peer_key)
                         for key in self._wgdb.list_keys(relation.id)
                     ):
                         continue
@@ -238,14 +228,11 @@ class Charm(ops.CharmBase):
             # acknowledge incoming links
             for link in unit.listen_ports:
                 if not any(
-                    link.peer_public_key == k.public_key
-                    for k in self._wgdb.list_keys(relation.id)
+                    link.peer_public_key == k.public_key for k in self._wgdb.list_keys(relation.id)
                 ):
                     # link is not for myself
                     continue
-                half_open_link = self._wgdb.search_link(
-                    link.peer_public_key, link.public_key
-                )
+                half_open_link = self._wgdb.search_link(link.peer_public_key, link.public_key)
                 endpoint = join_host_port(unit.ingress_address, link.port)
                 if not half_open_link:
                     port = self._wgdb.allocate_port(relation.is_provider)
@@ -264,9 +251,7 @@ class Charm(ops.CharmBase):
                         peer_endpoint=endpoint,
                     )
 
-    def _relation_update_links(
-        self, relation: relations.WireguardRouterRelation
-    ) -> None:
+    def _relation_update_links(self, relation: relations.WireguardRouterRelation) -> None:
         for link in self._wgdb.list_link(owner=relation.id, include_half_closed=True):
             unit = relation.search_unit(public_key=link.peer_public_key)
             listen_port = (
@@ -281,9 +266,7 @@ class Charm(ops.CharmBase):
                 self._wgdb.update_link(
                     public_key=link.public_key,
                     peer_public_key=link.peer_public_key,
-                    peer_endpoint=join_host_port(
-                        unit.ingress_address, listen_port.port
-                    ),
+                    peer_endpoint=join_host_port(unit.ingress_address, listen_port.port),
                     peer_allowed_ips=unit.advertise_prefixes,
                 )
             match link.status:
@@ -309,9 +292,7 @@ class Charm(ops.CharmBase):
                 self._wgdb.acknowledge_open_link(
                     public_key=link.public_key,
                     peer_public_key=link.peer_public_key,
-                    peer_endpoint=join_host_port(
-                        unit.ingress_address, listen_port.port
-                    ),
+                    peer_endpoint=join_host_port(unit.ingress_address, listen_port.port),
                 )
                 return
 
@@ -370,9 +351,7 @@ class Charm(ops.CharmBase):
 
     def _relation_sync(self, relation: relations.WireguardRouterRelation) -> None:
         relation.set_advertise_prefixes(self.get_advertise_prefixes())
-        relation.set_public_key(
-            [k.public_key for k in self._wgdb.list_keys(relation.id)]
-        )
+        relation.set_public_key([k.public_key for k in self._wgdb.list_keys(relation.id)])
         relation.set_listen_ports(
             [
                 relations.WireguardRouterListenPort(

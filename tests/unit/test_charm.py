@@ -40,9 +40,7 @@ def test_charm_populate_public_key_in_relation(relation_name: str):
     assert_relation = AssertRelationData(local_unit_data)
     assert set(assert_relation.data.public_keys) == expected_public_keys
     db = load_wgdb()
-    assert {
-        k.public_key for k in db.list_keys(owner=relation.id)
-    } == expected_public_keys
+    assert {k.public_key for k in db.list_keys(owner=relation.id)} == expected_public_keys
 
 
 @pytest.mark.parametrize(
@@ -197,10 +195,7 @@ def test_nonequal_public_key_numbers(remote_public_keys):
             1: {
                 "ingress-address": "172.16.0.1",
                 "public-keys": ",".join(
-                    [
-                        example_public_key("remote1", i)
-                        for i in range(remote_public_keys)
-                    ]
+                    [example_public_key("remote1", i) for i in range(remote_public_keys)]
                 ),
             }
         },
@@ -322,9 +317,7 @@ def test_remote_remove_listen_ports(relation_name: str):
         wgdb.WireguardLinkStatus.HALF_CLOSE,
     ],
 )
-def test_remote_remove_public_keys(
-    relation_name: str, link_state: wgdb.WireguardLinkStatus
-):
+def test_remote_remove_public_keys(relation_name: str, link_state: wgdb.WireguardLinkStatus):
     db = load_wgdb()
     db.add_key(
         owner=1,
