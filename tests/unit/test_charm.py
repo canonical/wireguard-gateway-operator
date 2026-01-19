@@ -434,42 +434,41 @@ def test_charm_configure_bird_wireguard(get_bird_config, get_wireguard_config):
             router id 172.16.0.0;
 
             protocol kernel k4 {
-              ipv4 { import none; export where net !~ [169.254.0.0/16+]; };
-              merge paths yes;
+              ipv4 { import none; export all; };
+              merge paths yes limit 64;
             }
 
             protocol kernel k6 {
               ipv6 { import none; export all; };
-              merge paths yes;
+              merge paths yes limit 64;
             }
 
             protocol device {}
 
             protocol ospf v3 OSPF6 {
               rfc5838 yes;
-              ecmp yes;
+              ecmp yes limit 64;
               instance id 0;
               ipv6 { import all; export none; };
 
               area 0.0.0.0 {
-                interface "wg50000" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+                interface "wg50000" { type ptp; cost 10; hello 5; dead 30; };
                 stubnet 2001:db8::/32 { cost 10; };
               };
             }
 
             protocol ospf v3 OSPF4 {
               rfc5838 yes;
-              ecmp yes;
+              ecmp yes limit 64;
               instance id 64;
               ipv4 { import all; export none; };
 
               area 0.0.0.0 {
-                interface "wg50000" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+                interface "wg50000" { type ptp; cost 10; hello 5; dead 30; };
+                stubnet 169.254.0.0/24 { hidden; };
                 stubnet 192.0.2.0/24 { cost 10; };
               };
             }
-
-            protocol bfd {}
             """
         ).strip()
     )
