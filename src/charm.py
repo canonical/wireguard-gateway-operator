@@ -12,20 +12,28 @@ import typing
 
 import ops
 
+import bird
 import relations
 import wgdb
 import wireguard
-from wgdb import WireguardLinkStatus
 
 logger = logging.getLogger(__name__)
 
-_WGDB_DIR = pathlib.Path("/opt/wireguard-gateway/")
-_WIREGUARD_ROUTER_PROVIDER_RELATION = "provide-wireguard-router"
-_WIREGUARD_ROUTER_REQUIRER_RELATION = "require-wireguard-router"
+WGDB_DIR = pathlib.Path("/opt/wireguard-gateway/")
+WIREGUARD_ROUTER_PROVIDER_RELATION = "wireguard-router-a"
+WIREGUARD_ROUTER_REQUIRER_RELATION = "wireguard-router-b"
+
+
+class InvalidRelationDataError(Exception):
+    """Invalid relation data."""
+
+
+class InvalidConfigError(Exception):
+    """Invalid configuration."""
 
 
 def join_host_port(host: str, port: int) -> str:
-    """Join host and port into a string:
+    """Join host and port into a string.
 
     Args:
         host: Hostname or IP address.
@@ -59,36 +67,124 @@ class Charm(ops.CharmBase):
         super().__init__(*args)
         self._wgdb = self._create_wgdb()
         self.framework.observe(self.on.config_changed, self.reconcile)
+        self.framework.observe(self.on.upgrade_charm, self.reconcile)
+        self.framework.observe(self.on.update_status, self.reconcile)
+        for relation in [
+            WIREGUARD_ROUTER_PROVIDER_RELATION,
+            WIREGUARD_ROUTER_REQUIRER_RELATION,
+        ]:
+            self.framework.observe(self.on[relation].relation_changed, self.reconcile)
+            self.framework.observe(self.on[relation].relation_joined, self.reconcile)
+            self.framework.observe(self.on[relation].relation_departed, self.reconcile)
+            self.framework.observe(self.on[relation].relation_broken, self.reconcile)
 
-    def _create_wgdb(self):
+    def _create_wgdb(self) -> wgdb.WireguardDb:
         """Create WireGuard database if not exists."""
-        file = _WGDB_DIR / f"{self.unit.name.replace('/', '-')}.json"
+        file = WGDB_DIR / f"{self.unit.name.replace('/', '-')}.json"
         file.parent.mkdir(parents=True, exist_ok=True)
         return wgdb.WireguardDb(file=file)
 
+    def get_advertise_prefixes(
+        self,
+    ) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+        """Get advertise-prefixes configuration.
+
+        Returns:
+            List of advertise prefixes.
+        """
+        prefixes = []
+        config = self.config.get("advertise-prefixes")
+        if not config:
+            config = ""
+        for prefix in str(config).split(","):
+            prefix = prefix.strip()
+            if not prefix:
+                continue
+            try:
+                prefixes.append(ipaddress.ip_network(prefix, strict=False))
+            except ValueError:
+                raise InvalidConfigError("invalid advertise-prefixes: not a ipv4 or ipv6 prefix")
+        if not prefixes:
+            raise InvalidConfigError("no advertise-prefixes configured")
+        return prefixes
+
+    def get_tunnels(self) -> int:
+        """Get number of tunnels configuration.
+
+        Returns:
+            Number of tunnels.
+        """
+        val = self.config.get("tunnels")
+        if val is None:
+            raise ValueError("tunnels configuration is missing")
+        tunnels = int(val)
+        if tunnels <= 1:
+            raise ValueError("tunnels configuration must be greater than 1")
+        return tunnels
+
     def reconcile(self, event: ops.EventBase) -> None:
-        """Reconcile callback."""
-        self._reconcile()
+        """Reconcile the charm.
+
+        Args:
+            event: Event.
+        """
+        try:
+            self._reconcile()
+            advertise_prefixes = ", ".join(map(str, self.get_advertise_prefixes()))
+            self.unit.status = ops.ActiveStatus(f"advertising prefixes: {advertise_prefixes}")
+        except InvalidRelationDataError as exc:
+            self.unit.status = ops.BlockedStatus(str(exc))
+        except InvalidConfigError as exc:
+            self.unit.status = ops.BlockedStatus(str(exc))
 
     def _reconcile(self) -> None:
         """Holistic reconciliation method."""
-        for relation in self.model.relations[_WIREGUARD_ROUTER_PROVIDER_RELATION]:
-            self._reconcile_relation(relation, is_provider=True)
-        for relation in self.model.relations[_WIREGUARD_ROUTER_REQUIRER_RELATION]:
-            self._reconcile_relation(relation, is_provider=False)
+        advertise_prefixes = self.get_advertise_prefixes()
+        self.get_tunnels()
+
+        wireguard.wireguard_install()
+        bird.bird_install()
+
+        invalid_relations = []
+        provider_map = {}
+        for relation in self.model.relations[WIREGUARD_ROUTER_PROVIDER_RELATION]:
+            provider_map[relation.id] = True
+            try:
+                self._reconcile_relation(relation, is_provider=True)
+            except InvalidRelationDataError:
+                invalid_relations.append(relation)
+        for relation in self.model.relations[WIREGUARD_ROUTER_REQUIRER_RELATION]:
+            provider_map[relation.id] = False
+            try:
+                self._reconcile_relation(relation, is_provider=False)
+            except InvalidRelationDataError:
+                invalid_relations.append(relation)
+
+        bird.bird_sync_db(db=self._wgdb, advertise_prefixes=advertise_prefixes)
+        wireguard.wireguard_sync_db(self._wgdb, provider_map)
+        if invalid_relations:
+            raise InvalidRelationDataError(
+                f"relation(s) contains invalid data: {invalid_relations}"
+            )
 
     def _reconcile_relation(self, relation: ops.Relation, is_provider: bool) -> None:
         """Holistic reconciliation method for one relation."""
-        data = relations.WireguardRouterRelation.from_relation(
-            charm=self, relation=relation, is_provider=is_provider
-        )
+        try:
+            data = relations.WireguardRouterRelation.from_relation(
+                charm=self,
+                relation=relation,
+                is_provider=is_provider,
+            )
+        except ValueError:
+            raise InvalidRelationDataError()
+        data.set_advertise_prefixes(self.get_advertise_prefixes())
         self._relation_add_keys(data)
         self._relation_add_links(data)
         self._relation_update_links(data)
         self._relation_sync_db(data)
 
     def _relation_add_keys(self, relation: relations.WireguardRouterRelation) -> None:
-        while len(self._wgdb.list_keys(relation.id)) < self.config.get("tunnels"):
+        while len(self._wgdb.list_keys(relation.id)) < self.get_tunnels():
             keypair = wireguard.generate_keypair()
             self._wgdb.add_key(
                 owner=relation.id,
@@ -105,9 +201,7 @@ class Charm(ops.CharmBase):
                     continue
                 # if the key has been used in a link with that remote unit, skip it
                 if any(
-                    self._wgdb.search_link(
-                        public_key=key.public_key, peer_public_key=peer_key
-                    )
+                    self._wgdb.search_link(public_key=key.public_key, peer_public_key=peer_key)
                     for peer_key in unit.public_keys
                 ):
                     continue
@@ -115,13 +209,11 @@ class Charm(ops.CharmBase):
                 # and then form a link with that key
                 for peer_key in unit.public_keys:
                     if any(
-                        self._wgdb.search_link(
-                            public_key=key.public_key, peer_public_key=peer_key
-                        )
+                        self._wgdb.search_link(public_key=key.public_key, peer_public_key=peer_key)
                         for key in self._wgdb.list_keys(relation.id)
                     ):
                         continue
-                    port = self._wgdb.allocate_port()
+                    port = self._wgdb.allocate_port(relation.is_provider)
                     self._wgdb.open_link(
                         owner=relation.id,
                         public_key=key.public_key,
@@ -133,17 +225,14 @@ class Charm(ops.CharmBase):
             # acknowledge incoming links
             for link in unit.listen_ports:
                 if not any(
-                    link.peer_public_key == k.public_key
-                    for k in self._wgdb.list_keys(relation.id)
+                    link.peer_public_key == k.public_key for k in self._wgdb.list_keys(relation.id)
                 ):
                     # link is not for myself
                     continue
-                half_open_link = self._wgdb.search_link(
-                    link.peer_public_key, link.public_key
-                )
+                half_open_link = self._wgdb.search_link(link.peer_public_key, link.public_key)
                 endpoint = join_host_port(unit.ingress_address, link.port)
                 if not half_open_link:
-                    port = self._wgdb.allocate_port()
+                    port = self._wgdb.allocate_port(relation.is_provider)
                     self._wgdb.open_link(
                         owner=relation.id,
                         public_key=link.peer_public_key,
@@ -159,9 +248,7 @@ class Charm(ops.CharmBase):
                         peer_endpoint=endpoint,
                     )
 
-    def _relation_update_links(
-        self, relation: relations.WireguardRouterRelation
-    ) -> None:
+    def _relation_update_links(self, relation: relations.WireguardRouterRelation) -> None:
         for link in self._wgdb.list_link(owner=relation.id, include_half_closed=True):
             unit = relation.search_unit(public_key=link.peer_public_key)
             listen_port = (
@@ -176,17 +263,15 @@ class Charm(ops.CharmBase):
                 self._wgdb.update_link(
                     public_key=link.public_key,
                     peer_public_key=link.peer_public_key,
-                    peer_endpoint=join_host_port(
-                        unit.ingress_address, listen_port.port
-                    ),
+                    peer_endpoint=join_host_port(unit.ingress_address, listen_port.port),
                     peer_allowed_ips=unit.advertise_prefixes,
                 )
             match link.status:
-                case WireguardLinkStatus.HALF_OPEN:
+                case wgdb.WireguardLinkStatus.HALF_OPEN:
                     self._relation_update_half_open_link(relation=relation, link=link)
-                case WireguardLinkStatus.OPEN:
+                case wgdb.WireguardLinkStatus.OPEN:
                     self._relation_update_open_link(relation=relation, link=link)
-                case WireguardLinkStatus.HALF_CLOSE:
+                case wgdb.WireguardLinkStatus.HALF_CLOSE:
                     self._relation_update_half_close_link(relation=relation, link=link)
 
     def _relation_update_half_open_link(
@@ -204,9 +289,7 @@ class Charm(ops.CharmBase):
                 self._wgdb.acknowledge_open_link(
                     public_key=link.public_key,
                     peer_public_key=link.peer_public_key,
-                    peer_endpoint=join_host_port(
-                        unit.ingress_address, listen_port.port
-                    ),
+                    peer_endpoint=join_host_port(unit.ingress_address, listen_port.port),
                 )
                 return
 
@@ -264,9 +347,7 @@ class Charm(ops.CharmBase):
             return
 
     def _relation_sync_db(self, relation: relations.WireguardRouterRelation) -> None:
-        relation.set_public_key(
-            [k.public_key for k in self._wgdb.list_keys(relation.id)]
-        )
+        relation.set_public_key([k.public_key for k in self._wgdb.list_keys(relation.id)])
         relation.set_listen_ports(
             [
                 relations.WireguardRouterListenPort(

@@ -18,9 +18,10 @@ _BIRD_CONF_TEMPLATE = pathlib.Path(__file__).parent.parent / "templates/bird.con
 _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
 
 
-def bird_install():
+def bird_install() -> None:
     """Install BIRD using apt if not installed."""
     if not shutil.which("birdc"):
+        apt.update()
         apt.add_package("bird2")
 
 
@@ -30,9 +31,7 @@ def get_router_id() -> str:
     Return:
         Router ID as string.
     """
-    out = subprocess.check_output(
-        ["ip", "-4", "-j", "route", "get", "1.2.3.4"], encoding="utf-8"
-    )
+    out = subprocess.check_output(["ip", "-4", "-j", "route", "get", "1.2.3.4"], encoding="utf-8")  # noqa: S607
     return json.loads(out)[0]["prefsrc"]
 
 
@@ -53,17 +52,13 @@ def bird_config(
     """
     template = _BIRD_CONF_TEMPLATE.read_text()
     ipv4_prefixes = [
-        str(prefix)
-        for prefix in advertise_prefixes
-        if isinstance(prefix, ipaddress.IPv4Network)
+        str(prefix) for prefix in advertise_prefixes if isinstance(prefix, ipaddress.IPv4Network)
     ]
     ipv6_prefixes = [
-        str(prefix)
-        for prefix in advertise_prefixes
-        if isinstance(prefix, ipaddress.IPv6Network)
+        str(prefix) for prefix in advertise_prefixes if isinstance(prefix, ipaddress.IPv6Network)
     ]
     return (
-        jinja2.Environment(loader=jinja2.BaseLoader())
+        jinja2.Environment(loader=jinja2.BaseLoader(), autoescape=True)
         .from_string(template)
         .render(
             router_id=router_id,
@@ -82,4 +77,22 @@ def bird_reload(config: str) -> None:
     """
     if _BIRD_CONF_FILE.read_text(encoding="utf-8") != config:
         _BIRD_CONF_FILE.write_text(config, encoding="utf-8")
-    subprocess.check_call(["birdc", "configure"])
+    subprocess.check_call(["birdc", "configure"])  # noqa: S607
+
+
+def bird_sync_db(
+    db: wgdb.WireguardDb,
+    advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
+) -> None:
+    """Sync BIRD configuration with WireGuard database.
+
+    Args:
+        db: WireGuard database.
+        advertise_prefixes: List of prefixes to advertise.
+    """
+    config = bird_config(
+        router_id=get_router_id(),
+        interfaces=db.list_link(),
+        advertise_prefixes=advertise_prefixes,
+    )
+    bird_reload(config)

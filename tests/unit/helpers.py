@@ -7,6 +7,8 @@ import charm
 import relations
 import wgdb
 
+__all__ = ["AssertRelationData", "example_private_key", "example_public_key", "load_wgdb"]
+
 
 def example_public_key(name: str, n: int) -> str:
     """Generate a fake public key for testing.
@@ -44,7 +46,7 @@ def load_wgdb() -> wgdb.WireguardDb:
     Returns:
         The WireguardDb instance.
     """
-    return wgdb.WireguardDb(file=charm._WGDB_DIR / "wireguard-gateway-0.json")
+    return wgdb.WireguardDb(file=charm.WGDB_DIR / "wireguard-gateway-0.json")
 
 
 class AssertRelationData:
@@ -81,6 +83,4 @@ class AssertRelationData:
                 and (port is None or listen_port.port == port)
             ):
                 return
-        assert (
-            False
-        ), f"{public_key}:{peer_public_key}:{port if port else '*'} not found"
+        assert False, f"{public_key}:{peer_public_key}:{port if port else '*'} not found"

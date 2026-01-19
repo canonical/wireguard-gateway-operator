@@ -31,13 +31,18 @@ parts:
     plugin: uv
     build-snaps:
       - astral-uv
+  templates:
+    source: .
+    plugin: dump
+    stage:
+      - templates
 
 provides:
-  provide-wireguard-router:
+  wireguard-router-a:
     interface: wireguard_router
 
 requires:
-  require-wireguard-router:
+  wireguard-router-b:
     interface: wireguard_router
 
 config:
@@ -46,3 +51,6 @@ config:
       type: int
       default: 2
       description: Number of WireGuard tunnels to create per unit.
+    advertise-prefixes:
+      type: string
+      description: A comma separated list of ipv4 or ipv6 prefixes.

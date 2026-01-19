@@ -10,16 +10,25 @@ import shutil
 import subprocess
 import textwrap
 
-from charmlibs import apt
-from charmlibs import systemd
+from charmlibs import apt, systemd
 
 import wgdb
 
 _WG_QUICK_CONFIG_DIR = pathlib.Path("/etc/wireguard/")
 
-WireguardKeypair = collections.namedtuple(
-    "WireguardKeyPair", ["private_key", "public_key"]
-)
+WireguardKeypair = collections.namedtuple("WireguardKeypair", ["private_key", "public_key"])
+
+
+def generate_public_key(private_key: str) -> str:
+    """Generate public key from private key.
+
+    Args:
+        private_key: The private key.
+
+    Returns:
+        The generated public key.
+    """
+    return subprocess.check_output(["wg", "pubkey"], input=private_key, encoding="ascii").strip()  # noqa: S607
 
 
 def generate_keypair() -> WireguardKeypair:
@@ -28,10 +37,8 @@ def generate_keypair() -> WireguardKeypair:
     Returns:
         The generated keypair.
     """
-    private_key = subprocess.check_output(["wg", "genkey"], encoding="ascii").strip()
-    public_key = subprocess.check_output(
-        ["wg", "pubkey"], input=private_key, encoding="ascii"
-    ).strip()
+    private_key = subprocess.check_output(["wg", "genkey"], encoding="ascii").strip()  # noqa: S607
+    public_key = generate_public_key(private_key)
     return WireguardKeypair(private_key, public_key)
 
 
@@ -45,20 +52,18 @@ def _wg_quick_config(interface: wgdb.WireguardLink, is_provider: bool) -> str:
     Returns:
         The generated configuration string.
     """
-    if is_provider:
-        address = "169.254.0.1/24, fe80::1/64"
-    else:
-        address = "169.254.0.2/24, fe80::2/64"
+    address = "169.254.0.1/24, fe80::1/64" if is_provider else "169.254.0.2/24, fe80::2/64"
     config = textwrap.dedent(
         f"""\
         [Interface]
         Address = {address}
+        ListenPort = {interface.port}
         PrivateKey = {interface.private_key}
         Table = off
-        
+
         [Peer]
         PublicKey = {interface.peer_public_key}
-        AllowedIPs = {", ".join(map(str,interface.allowed_ips))}
+        AllowedIPs = 224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64{"," if interface.peer_allowed_ips else ""} {", ".join(map(str, interface.peer_allowed_ips))}
         Endpoint = {interface.peer_endpoint}
         PersistentKeepalive = 5
         """
@@ -79,10 +84,11 @@ def _wg_config(interface: wgdb.WireguardLink) -> str:
         f"""\
         [Interface]
         PrivateKey = {interface.private_key}
-    
+        ListenPort = {interface.port}
+
         [Peer]
         PublicKey = {interface.peer_public_key}
-        AllowedIPs = 224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64, {", ".join(map(str,interface.allowed_ips))}
+        AllowedIPs = 224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64{"," if interface.peer_allowed_ips else ""} {", ".join(map(str, interface.peer_allowed_ips))}
         Endpoint = {interface.peer_endpoint}
         PersistentKeepalive = 5
         """
@@ -98,28 +104,30 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
     Returns:
         The WireGuard interface configuration.
     """
-    conf_str = subprocess.check_output(["wg", "showconf", name], encoding="ascii")
+    conf_str = subprocess.check_output(["wg", "showconf", name], encoding="ascii")  # noqa: S607
     config = configparser.ConfigParser()
     config.read_string(conf_str)
     private_key = config.get("Interface", "PrivateKey")
     public_key = generate_public_key(private_key)
     return wgdb.WireguardLink.model_validate(
-        dict(
-            status=wgdb.WireguardLinkStatus.OPEN,
-            public_key=public_key,
-            private_key=private_key,
-            port=int(config.get("Interface", "ListenPort")),
-            peer_public_key=config.get("Peer", "PublicKey"),
-            peer_endpoint=config.get("Peer", "Endpoint"),
-            peer_allowed_ips=config.get("Peer", "AllowedIPs").split(","),
-        )
+        {
+            "owner": 0,
+            "status": wgdb.WireguardLinkStatus.OPEN,
+            "public_key": public_key,
+            "private_key": private_key,
+            "port": int(config.get("Interface", "ListenPort")),
+            "peer_public_key": config.get("Peer", "PublicKey"),
+            "peer_endpoint": config.get("Peer", "Endpoint"),
+            "peer_allowed_ips": config.get("Peer", "AllowedIPs").split(","),
+        }
     )
 
 
 def wireguard_install() -> None:
     """Install WireGuard package."""
     if not shutil.which("wg-quick"):
-        apt.add_package("wireguard", "wireguard-tools")
+        apt.update()
+        apt.add_package("wireguard")
 
 
 def wireguard_list() -> list[wgdb.WireguardLink]:
@@ -130,9 +138,7 @@ def wireguard_list() -> list[wgdb.WireguardLink]:
     """
     interfaces = [
         i.strip()
-        for i in subprocess.check_output(
-            ["wg", "show", "interfaces"], encoding="ascii"
-        ).split()
+        for i in subprocess.check_output(["wg", "show", "interfaces"], encoding="ascii").split()  # noqa: S607
     ]
     return [_wg_showconf(i) for i in interfaces]
 
@@ -165,14 +171,38 @@ def wireguard_remove(interface: wgdb.WireguardLink) -> None:
     wg_quick_config.unlink(missing_ok=True)
 
 
-def wireguard_syncconf(interface: wgdb.WireguardLink) -> None:
+def wireguard_syncconf(interface: wgdb.WireguardLink, is_provider: bool) -> None:
     """Sync WireGuard configuration.
 
     Args:
         interface: The WireGuard interface to sync.
+        is_provider: Whether this unit is on the provider of the relation.
     """
     name = f"wg{interface.port}"
     subprocess.check_output(
-        ["wg", "syncconf", name, "/dev/stdin"],
+        ["wg", "syncconf", name, "/dev/stdin"],  # noqa: S607
         input=_wg_config(interface).encode("ascii"),
     )
+    wg_quick_config = _WG_QUICK_CONFIG_DIR / f"{interface.interface_name}.conf"
+    wg_quick_config.touch(mode=0o600)
+    wg_quick_config.write_text(_wg_quick_config(interface, is_provider))
+
+
+def wireguard_sync_db(db: wgdb.WireguardDb, provider_map: dict[int, bool]) -> None:
+    """Sync WireGuard interfaces with database.
+
+    Args:
+        db: The WireGuard database.
+        provider_map: Mapping of relation ID to provider status.
+    """
+    interfaces = {w.port: w for w in wireguard_list()}
+    for link in db.list_link(include_half_closed=True):
+        if link.status == wgdb.WireguardLinkStatus.HALF_OPEN:
+            continue
+        if link.port in interfaces:
+            wireguard_syncconf(link, is_provider=provider_map[link.owner])
+            del interfaces[link.port]
+        else:
+            wireguard_add(link, is_provider=provider_map[link.owner])
+    for interface in interfaces.values():
+        wireguard_remove(interface)

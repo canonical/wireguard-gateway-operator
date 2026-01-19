@@ -86,9 +86,7 @@ class WireguardLink(pydantic.BaseModel):
         """
         result = []
         for ip in ips:
-            if isinstance(ip, ipaddress.IPv4Network) or isinstance(
-                ip, ipaddress.IPv6Network
-            ):
+            if isinstance(ip, (ipaddress.IPv4Network, ipaddress.IPv6Network)):
                 result.append(ip)
             else:
                 result.append(ipaddress.ip_network(ip.strip(), strict=False))
@@ -141,21 +139,22 @@ class WireguardDb:
             Loaded database schema.
         """
         if self.file.exists():
-            return _WireguardDbSchema.model_validate_json(
-                self.file.read_text(encoding="utf-8")
-            )
+            return _WireguardDbSchema.model_validate_json(self.file.read_text(encoding="utf-8"))
         else:
             return _WireguardDbSchema()
 
-    def _save(self):
+    def _save(self) -> None:
         """Save database to file."""
         tmp_file = self.file.with_suffix(f".{secrets.token_urlsafe(8)}")
         tmp_file.touch(mode=0o600)
         tmp_file.write_text(self._data.model_dump_json(indent=2), encoding="utf-8")
         os.rename(tmp_file, self.file)
 
-    def allocate_port(self) -> int:
+    def allocate_port(self, is_provider: bool) -> int:
         """Allocates an unused port from the configured range.
+
+        Args:
+            is_provider: Whether the allocated port is for provider.
 
         Returns:
             An integer representing the allocated port.
@@ -163,24 +162,24 @@ class WireguardDb:
         Raises:
             ValueError: If no ports are available in the range.
         """
-        used = set(l.port for l in self._data.links)
+        used = {link.port for link in self._data.links}
         for port in range(self._data.port_counter, _WIREGUARD_PORT_RANGE[1]):
             if port in used:
+                continue
+            if (is_provider and port % 2 == 0) or (not is_provider and port % 2 == 1):
                 continue
             self._data.port_counter = port
             return port
         for port in range(*_WIREGUARD_PORT_RANGE):
             if port in used:
                 continue
+            if (is_provider and port % 2 == 0) or (not is_provider and port % 2 == 1):
+                continue
             self._data.port_counter = port
             return port
-        raise ValueError(
-            "all ports in the configured WireGuard port range are already in use"
-        )
+        raise ValueError("all ports in the configured WireGuard port range are already in use")
 
-    def list_keys(
-        self, owner: int, include_retired: bool = False
-    ) -> list[WireguardKey]:
+    def list_keys(self, owner: int, include_retired: bool = False) -> list[WireguardKey]:
         """Lists all key pairs for a given owner.
 
         Args:
@@ -268,9 +267,7 @@ class WireguardDb:
         self._data.keys = [k for k in self._data.keys if k.public_key == public_key]
         self._save()
 
-    def _search_link(
-        self, public_key: str, peer_public_key: str
-    ) -> WireguardLink | None:
+    def _search_link(self, public_key: str, peer_public_key: str) -> WireguardLink | None:
         """Search for a link in database.
 
         The returned link object is a reference to the object inside the database. modifying it
@@ -284,10 +281,7 @@ class WireguardDb:
             The link object if found, None otherwise.
         """
         for link in self._data.links:
-            if (
-                link.public_key == public_key
-                and link.peer_public_key == peer_public_key
-            ):
+            if link.public_key == public_key and link.peer_public_key == peer_public_key:
                 return link
         return None
 
@@ -312,9 +306,7 @@ class WireguardDb:
             raise KeyError("link not found in the database")
         return link
 
-    def search_link(
-        self, public_key: str, peer_public_key: str
-    ) -> WireguardLink | None:
+    def search_link(self, public_key: str, peer_public_key: str) -> WireguardLink | None:
         """Searches for a link by local and peer public keys.
 
         Args:
@@ -331,7 +323,7 @@ class WireguardDb:
 
     def list_link(
         self,
-        owner: int,
+        owner: int | None = None,
         include_closed: bool = False,
         include_half_closed: bool = False,
     ) -> list[WireguardLink]:
@@ -348,7 +340,7 @@ class WireguardDb:
         return [
             link.model_copy(deep=True)
             for link in self._data.links
-            if link.owner == owner
+            if (owner is None or link.owner == owner)
             and (include_closed or link.status != WireguardLinkStatus.CLOSE)
             and (include_half_closed or link.status != WireguardLinkStatus.HALF_CLOSE)
         ]
@@ -428,9 +420,7 @@ class WireguardDb:
         """
         link = self._must_search_link(public_key, peer_public_key)
         link.status = (
-            WireguardLinkStatus.HALF_CLOSE
-            if not acknowledged
-            else WireguardLinkStatus.CLOSE
+            WireguardLinkStatus.HALF_CLOSE if not acknowledged else WireguardLinkStatus.CLOSE
         )
         link.closed_at = self._utc_now()
         self._save()
@@ -457,9 +447,9 @@ class WireguardDb:
             peer_public_key: The peer's public key.
         """
         self._data.links = [
-            l
-            for l in self._data.links
-            if l.public_key == public_key and l.peer_public_key == peer_public_key
+            link
+            for link in self._data.links
+            if link.public_key == public_key and link.peer_public_key == peer_public_key
         ]
         self._save()
 
@@ -468,7 +458,7 @@ class WireguardDb:
         public_key: str,
         peer_public_key: str,
         peer_endpoint: str | None = None,
-        peer_allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = None,
+        peer_allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None = None,
     ) -> None:
         """Update link information in the database.
 
@@ -478,9 +468,7 @@ class WireguardDb:
             peer_endpoint: The endpoint address of the peer.
             peer_allowed_ips: The peer's allowed ips.
         """
-        link = self._must_search_link(
-            public_key=public_key, peer_public_key=peer_public_key
-        )
+        link = self._must_search_link(public_key=public_key, peer_public_key=peer_public_key)
         changed = False
         if peer_endpoint is not None and link.peer_endpoint != peer_endpoint:
             if not link.peer_endpoint:

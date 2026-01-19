@@ -19,12 +19,12 @@ protocol ospf v3 OSPF6 {
   ipv6 { import all; export none; };
 
   area 0.0.0.0 {
-{% for interface in interfaces %}
-    interface "{{ interface }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
-{% endfor %}
-{% for prefix in ipv6_prefixes %}
+{% for interface in interfaces %}{{ "    " -}}
+    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+{%- endfor %}
+{% for prefix in ipv6_prefixes %}{{ "    " -}}
     stubnet {{ prefix }} { cost 10; };
-{% endfor %}
+{%- endfor %}
   };
 }
 
@@ -35,12 +35,12 @@ protocol ospf v3 OSPF4 {
   ipv4 { import all; export none; };
 
   area 0.0.0.0 {
-{% for interface in interfaces %}
-    interface "{{ interface }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
-{% endfor %}
-{% for prefix in ipv4_prefixed %}
+{% for interface in interfaces %}{{ "    " -}}
+    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+{%- endfor %}
+{% for prefix in ipv4_prefixes %}{{ "    " -}}
     stubnet {{ prefix }} { cost 10; };
-{% endfor %}
+{%- endfor %}
   };
 }
 

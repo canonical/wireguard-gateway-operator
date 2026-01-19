@@ -12,6 +12,8 @@ from pydantic import field_validator
 
 
 class WireguardRouterListenPort(pydantic.BaseModel):
+    """WireGuard router relation listen port data model."""
+
     public_key: str
     peer_public_key: str
     port: int
@@ -32,14 +34,16 @@ class WireguardRouterListenPort(pydantic.BaseModel):
 
 
 class WireguardRouterRelationData(pydantic.BaseModel):
+    """WireGuard router relation data mode."""
+
     model_config = pydantic.ConfigDict(
         alias_generator=pydantic.AliasGenerator(
             alias=lambda n: n.replace("_", "-"),
         )
     )
     ingress_address: str
-    advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = (
-        pydantic.Field(default_factory=list)
+    advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = pydantic.Field(
+        default_factory=list
     )
     public_keys: list[str] = pydantic.Field(default_factory=list)
     listen_ports: list[WireguardRouterListenPort] = pydantic.Field(default_factory=list)
@@ -79,9 +83,7 @@ class WireguardRouterRelationData(pydantic.BaseModel):
 
     @pydantic.field_serializer("listen_ports")
     def _serialize_listen_ports(self, value: list[WireguardRouterListenPort]) -> str:
-        return ",".join(
-            ":".join([p.public_key, p.peer_public_key, str(p.port)]) for p in value
-        )
+        return ",".join(":".join([p.public_key, p.peer_public_key, str(p.port)]) for p in value)
 
     @pydantic.field_validator("listen_ports", mode="before")
     @classmethod
@@ -99,14 +101,11 @@ class WireguardRouterRelationData(pydantic.BaseModel):
         return ports
 
     @pydantic.model_validator(mode="after")
-    @classmethod
-    def _validate_model(
-        cls, v: "WireguardRouterRelationData"
-    ) -> "WireguardRouterRelationData":
-        for listen in v.listen_ports:
-            if listen.public_key not in v.public_keys:
+    def _validate_model(self) -> "WireguardRouterRelationData":
+        for listen in self.listen_ports:
+            if listen.public_key not in self.public_keys:
                 raise ValueError("listen-ports public key not in public-keys")
-        return v
+        return self
 
     def lookup_listen_port(
         self, public_key: str, peer_public_key: str
@@ -121,10 +120,7 @@ class WireguardRouterRelationData(pydantic.BaseModel):
             Listen port if found, None otherwise.
         """
         for port in self.listen_ports:
-            if (
-                port.public_key == public_key
-                and port.peer_public_key == peer_public_key
-            ):
+            if port.public_key == public_key and port.peer_public_key == peer_public_key:
                 return port
         return None
 
@@ -197,12 +193,20 @@ class WireguardRouterRelation:
     def from_relation(
         cls, charm: ops.CharmBase, relation: ops.Relation, is_provider: bool
     ) -> "WireguardRouterRelation":
+        """Parse relation data from a WireGuard router relation.
+
+        Args:
+            charm: The charm instance.
+            relation: The relation instance.
+            is_provider: Whether this unit is the provider side of the relation.
+
+        Returns:
+            A new relation data object.
+        """
         data = WireguardRouterRelationData.model_validate(relation.data[charm.unit])
         remote_data = []
         for unit in relation.units:
-            remote_data.append(
-                WireguardRouterRelationData.model_validate(relation.data[unit])
-            )
+            remote_data.append(WireguardRouterRelationData.model_validate(relation.data[unit]))
         return cls(
             unit=charm.unit,
             relation=relation,
@@ -214,10 +218,19 @@ class WireguardRouterRelation:
     def _save(self) -> None:
         """Save the relation data back to the relation."""
         self._relation.data[self._unit].update(
-            self._data.model_dump(
-                exclude={"ingress_address", "ingress-address"}, by_alias=True
-            )
+            self._data.model_dump(exclude={"ingress_address", "ingress-address"}, by_alias=True)
         )
+
+    def set_advertise_prefixes(
+        self, advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network]
+    ) -> None:
+        """Set the advertise-prefixes in the relation data.
+
+        Args:
+            advertise_prefixes: List of advertise prefixes.
+        """
+        self._data.advertise_prefixes = advertise_prefixes
+        self._save()
 
     def set_public_key(self, public_keys: list[str]) -> None:
         """Set the public keys in the relation data.
