@@ -172,7 +172,7 @@ def wireguard_remove(interface: wgdb.WireguardLink) -> None:
 
 
 def wireguard_syncconf(interface: wgdb.WireguardLink, is_provider: bool) -> None:
-    """Sync WireGuard configuration.
+    """Apply WireGuard configuration to WireGuard interface.
 
     Args:
         interface: The WireGuard interface to sync.

@@ -8,6 +8,7 @@
 import json
 import logging
 import time
+import typing
 
 import jubilant
 import pytest
@@ -33,7 +34,9 @@ def test_charm(juju: jubilant.Juju, wireguard_gateway_charm_file: str):
     juju.wait(jubilant.all_active)
 
 
-def wait_for_bird_route(juju: jubilant.Juju, unit: str, ipv6: bool) -> list:
+def wait_for_bird_route(
+    juju: jubilant.Juju, unit: str, ipv6: bool, nexthops: int
+) -> list:
     deadline = time.time() + 30
     while time.time() < deadline:
         all_route = json.loads(
@@ -41,7 +44,7 @@ def wait_for_bird_route(juju: jubilant.Juju, unit: str, ipv6: bool) -> list:
         )
         logger.info(f"route on {unit}: {all_route}")
         bird_route = [route for route in all_route if route["protocol"] == "bird"]
-        if bird_route:
+        if bird_route and bird_route[0]["nexthops"] >= nexthops:
             return bird_route
         else:
             time.sleep(3)
@@ -52,11 +55,11 @@ def test_route(juju: jubilant.Juju):
     status = juju.status()
 
     for unit in status.get_units("wireguard-a"):
-        bird_route = wait_for_bird_route(juju, unit, ipv6=True)
+        bird_route = wait_for_bird_route(juju, unit, ipv6=True, nexthops=4)
         assert bird_route[0]["dst"] == "2001:db8::/32"
         assert len(bird_route[0]["nexthops"]) == 4
 
     for unit in status.get_units("wireguard-b"):
-        bird_route = wait_for_bird_route(juju, unit, ipv6=False)
+        bird_route = wait_for_bird_route(juju, unit, ipv6=False, nexthops=4)
         assert bird_route[0]["dst"] == "192.0.2.0/24"
         assert len(bird_route[0]["nexthops"]) == 4
