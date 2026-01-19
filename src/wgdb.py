@@ -277,7 +277,7 @@ class WireguardDb:
         Args:
             public_key: The public key of the pair to remove.
         """
-        self._data.keys = [k for k in self._data.keys if k.public_key == public_key]
+        self._data.keys = [k for k in self._data.keys if k.public_key != public_key]
         self._save()
 
     def _search_link(self, public_key: str, peer_public_key: str) -> WireguardLink | None:
@@ -462,7 +462,7 @@ class WireguardDb:
         self._data.links = [
             link
             for link in self._data.links
-            if link.public_key == public_key and link.peer_public_key == peer_public_key
+            if not (link.public_key == public_key and link.peer_public_key == peer_public_key)
         ]
         self._save()
 
