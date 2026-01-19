@@ -18,7 +18,7 @@ jobs:
       load-test-run-args: "-e LOAD_TEST_HOST=localhost"
       trivy-fs-enabled: true
       trivy-image-config: "trivy.yaml"
-      self-hosted-runner: true
+      self-hosted-runner: false
       self-hosted-runner-label: "edge"
       juju-channel: ${{ matrix.juju-channel }}
       with-uv: true

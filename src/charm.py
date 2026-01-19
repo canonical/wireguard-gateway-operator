@@ -262,6 +262,7 @@ class Charm(ops.CharmBase):
                 if unit
                 else None
             )
+            # update the endpoint and advertise-prefixes in case they changed
             if unit and listen_port:
                 self._wgdb.update_link(
                     public_key=link.public_key,
@@ -269,6 +270,7 @@ class Charm(ops.CharmBase):
                     peer_endpoint=join_host_port(unit.ingress_address, listen_port.port),
                     peer_allowed_ips=unit.advertise_prefixes,
                 )
+            # update link state
             match link.status:
                 case wgdb.WireguardLinkStatus.HALF_OPEN:
                     self._relation_update_half_open_link(relation=relation, link=link)
@@ -280,6 +282,14 @@ class Charm(ops.CharmBase):
     def _relation_update_half_open_link(
         self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
     ) -> None:
+        """Update a half-open WireGuard link.
+
+        Transitions:
+          - half-open -> closed:
+              - The peer public key is no longer present in the remote `public-keys` field.
+          - half-open -> open:
+              - The remote unit acknowledges the link by advertising it in the `listen-port` field.
+        """
         self._close_link_without_public_key(relation, link)
 
         for unit in relation.remote_data:
@@ -299,6 +309,15 @@ class Charm(ops.CharmBase):
     def _relation_update_open_link(
         self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
     ) -> None:
+        """Update an open WireGuard link.
+
+        Transitions:
+          - open -> closed:
+              - The peer public key is no longer present in the remote `public-keys` field.
+              - The link is no longer present in the remote `listen-port` field.
+          - open -> half-close:
+              - The link's corresponding public key is retired.
+        """
         self._close_link_without_public_key(relation, link)
         self._close_link_without_listen_port(relation, link)
 
@@ -312,12 +331,20 @@ class Charm(ops.CharmBase):
     def _relation_update_half_close_link(
         self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
     ) -> None:
+        """Update a half-close WireGuard link.
+
+        Transitions:
+          - half-close -> closed:
+              - The peer public key is no longer present in the remote `public-keys` field.
+              - The link is no longer present in the remote `listen-port` field.
+        """
         self._close_link_without_public_key(relation, link)
         self._close_link_without_listen_port(relation, link)
 
     def _close_link_without_public_key(
         self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
     ) -> None:
+        """Close link if the peer public key of the link no longer exists in the remote relation."""
         remote_public_keys = []
         for unit in relation.remote_data:
             remote_public_keys.extend(unit.public_keys)
@@ -333,6 +360,7 @@ class Charm(ops.CharmBase):
     def _close_link_without_listen_port(
         self, relation: relations.WireguardRouterRelation, link: wgdb.WireguardLink
     ) -> None:
+        """Close link if the link no longer exists in the remote relation's listen-ports field."""
         found = False
         for unit in relation.remote_data:
             for listen_port in unit.listen_ports:
@@ -350,6 +378,7 @@ class Charm(ops.CharmBase):
             return
 
     def _relation_sync(self, relation: relations.WireguardRouterRelation) -> None:
+        """Write the WireGuard database data back to the relation."""
         relation.set_advertise_prefixes(self.get_advertise_prefixes())
         relation.set_public_key([k.public_key for k in self._wgdb.list_keys(relation.id)])
         relation.set_listen_ports(
@@ -364,6 +393,7 @@ class Charm(ops.CharmBase):
         )
 
     def _relation_removed(self, relation_id: int) -> None:
+        """Cleanup on relation broken."""
         for key in self._wgdb.list_keys(relation_id):
             self._wgdb.retire_key(key.public_key)
 
