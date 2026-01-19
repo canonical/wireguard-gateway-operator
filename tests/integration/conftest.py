@@ -15,9 +15,9 @@ import pytest
 @pytest.fixture(name="wireguard_gateway_charm_file", scope="session")
 def wireguard_gateway_charm_file_fixture(pytestconfig: pytest.Config):
     """Build or get the wireguard-gateway charm file."""
-    charms = pytestconfig.getoption("--charm-file")
-    if charms:
-        return charms[0]
+    charm = pytestconfig.getoption("--charm-file")
+    if charm:
+        return charm
 
     try:
         subprocess.run(
