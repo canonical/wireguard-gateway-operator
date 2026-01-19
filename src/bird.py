@@ -8,6 +8,7 @@ import json
 import pathlib
 import shutil
 import subprocess
+import textwrap
 
 import jinja2
 from charmlibs import apt
@@ -16,6 +17,7 @@ import wgdb
 
 _BIRD_CONF_TEMPLATE = pathlib.Path(__file__).parent.parent / "templates/bird.conf.j2"
 _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
+_SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
 def bird_install() -> None:
@@ -23,6 +25,17 @@ def bird_install() -> None:
     if not shutil.which("birdc"):
         apt.update()
         apt.add_package("bird2")
+    if not _SYSCTL_FILE.exists():
+        _SYSCTL_FILE.touch()
+        _SYSCTL_FILE.write_text(
+            textwrap.dedent(
+                """\
+                net.ipv4.ip_forward = 1
+                net.ipv6.conf.all.forwarding = 1
+                """
+            )
+        )
+        subprocess.check_call(["sysctl", "--system"])  # noqa: S607
 
 
 def get_router_id() -> str:
