@@ -1,28 +1,28 @@
 router id {{ router_id }};
 
 protocol kernel k4 {
-  ipv4 { import none; export where net !~ [169.254.0.0/16+]; };
-  merge paths yes;
+  ipv4 { import none; export all; };
+  merge paths yes limit 64;
 }
 
 protocol kernel k6 {
   ipv6 { import none; export all; };
-  merge paths yes;
+  merge paths yes limit 64;
 }
 
 protocol device {}
 
 protocol ospf v3 OSPF6 {
   rfc5838 yes;
-  ecmp yes;
+  ecmp yes limit 64;
   instance id 0;
   ipv6 { import all; export none; };
 
   area 0.0.0.0 {
-{% for interface in interfaces %}{{ "    " -}}
-    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+{%- for interface in interfaces %}{{ "\n    " -}}
+    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 5; dead 30; };
 {%- endfor %}
-{% for prefix in ipv6_prefixes %}{{ "    " -}}
+{%- for prefix in ipv6_prefixes %}{{ "\n    " -}}
     stubnet {{ prefix }} { cost 10; };
 {%- endfor %}
   };
@@ -30,18 +30,17 @@ protocol ospf v3 OSPF6 {
 
 protocol ospf v3 OSPF4 {
   rfc5838 yes;
-  ecmp yes;
+  ecmp yes limit 64;
   instance id 64;
   ipv4 { import all; export none; };
 
   area 0.0.0.0 {
-{% for interface in interfaces %}{{ "    " -}}
-    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 1; dead 4; bfd yes; };
+{%- for interface in interfaces %}{{ "\n    " -}}
+    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 5; dead 30; };
 {%- endfor %}
-{% for prefix in ipv4_prefixes %}{{ "    " -}}
+    stubnet 169.254.0.0/24 { hidden; };
+{%- for prefix in ipv4_prefixes %}{{ "\n    " -}}
     stubnet {{ prefix }} { cost 10; };
 {%- endfor %}
   };
 }
-
-protocol bfd {}
