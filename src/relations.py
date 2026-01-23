@@ -14,6 +14,10 @@ from pydantic import field_validator
 class WireguardRouterListenPort(pydantic.BaseModel):
     """WireGuard router relation listen port data model."""
 
+    model_config = pydantic.ConfigDict(
+        frozen=True,
+    )
+
     public_key: str
     peer_public_key: str
     port: int
@@ -39,11 +43,12 @@ class WireguardRouterRelationData(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(
         alias_generator=pydantic.AliasGenerator(
             alias=lambda n: n.replace("_", "-"),
-        )
+        ),
+        frozen=True,
     )
     ingress_address: str
-    advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = pydantic.Field(
-        default_factory=list
+    advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = (
+        pydantic.Field(default_factory=list)
     )
     public_keys: list[str] = pydantic.Field(default_factory=list)
     listen_ports: list[WireguardRouterListenPort] = pydantic.Field(default_factory=list)
@@ -83,7 +88,9 @@ class WireguardRouterRelationData(pydantic.BaseModel):
 
     @pydantic.field_serializer("listen_ports")
     def _serialize_listen_ports(self, value: list[WireguardRouterListenPort]) -> str:
-        return ",".join(":".join([p.public_key, p.peer_public_key, str(p.port)]) for p in value)
+        return ",".join(
+            ":".join([p.public_key, p.peer_public_key, str(p.port)]) for p in value
+        )
 
     @pydantic.field_validator("listen_ports", mode="before")
     @classmethod
@@ -120,7 +127,10 @@ class WireguardRouterRelationData(pydantic.BaseModel):
             Listen port if found, None otherwise.
         """
         for port in self.listen_ports:
-            if port.public_key == public_key and port.peer_public_key == peer_public_key:
+            if (
+                port.public_key == public_key
+                and port.peer_public_key == peer_public_key
+            ):
                 return port
         return None
 
@@ -176,7 +186,7 @@ class WireguardRouterRelation:
         Return:
             The remote units relation data.
         """
-        return [d.model_copy(deep=True) for d in self._remote_data]
+        return [d for d in self._remote_data]
 
     def search_unit(self, *, public_key: str) -> WireguardRouterRelationData | None:
         """Search for a remote unit by public key.
@@ -186,7 +196,7 @@ class WireguardRouterRelation:
         """
         for data in self._remote_data:
             if public_key in data.public_keys:
-                return data.model_copy(deep=True)
+                return data
         return None
 
     @classmethod
@@ -203,22 +213,28 @@ class WireguardRouterRelation:
         Returns:
             A new relation data object.
         """
-        data = WireguardRouterRelationData.model_validate(relation.data[charm.unit])
+        local_data = WireguardRouterRelationData.model_validate(
+            relation.data[charm.unit]
+        )
         remote_data = []
         for unit in relation.units:
-            remote_data.append(WireguardRouterRelationData.model_validate(relation.data[unit]))
+            remote_data.append(
+                WireguardRouterRelationData.model_validate(relation.data[unit])
+            )
         return cls(
             unit=charm.unit,
             relation=relation,
             is_provider=is_provider,
-            data=data,
+            data=local_data,
             remote_data=remote_data,
         )
 
     def _save(self) -> None:
         """Save the relation data back to the relation."""
         self._relation.data[self._unit].update(
-            self._data.model_dump(exclude={"ingress_address", "ingress-address"}, by_alias=True)
+            self._data.model_dump(
+                exclude={"ingress_address", "ingress-address"}, by_alias=True
+            )
         )
 
     def set_advertise_prefixes(
@@ -229,16 +245,18 @@ class WireguardRouterRelation:
         Args:
             advertise_prefixes: List of advertise prefixes.
         """
-        self._data.advertise_prefixes = advertise_prefixes
+        self._data = self._data.model_copy(
+            update={"advertise_prefixes": advertise_prefixes}
+        )
         self._save()
 
-    def set_public_key(self, public_keys: list[str]) -> None:
+    def set_public_keys(self, public_keys: list[str]) -> None:
         """Set the public keys in the relation data.
 
         Args:
             public_keys: The public keys.
         """
-        self._data.public_keys = public_keys
+        self._data = self._data.model_copy(update={"public_keys": public_keys})
         self._save()
 
     def set_listen_ports(self, listen_ports: list[WireguardRouterListenPort]) -> None:
@@ -247,5 +265,5 @@ class WireguardRouterRelation:
         Args:
             listen_ports: The listen ports.
         """
-        self._data.listen_ports = listen_ports
+        self._data = self._data.model_copy(update={"listen_ports": listen_ports})
         self._save()

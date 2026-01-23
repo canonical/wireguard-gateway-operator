@@ -188,7 +188,7 @@ def wireguard_syncconf(interface: wgdb.WireguardLink, is_provider: bool) -> None
     wg_quick_config.write_text(_wg_quick_config(interface, is_provider))
 
 
-def wireguard_sync_db(db: wgdb.WireguardDb, provider_map: dict[int, bool]) -> None:
+def wireguard_apply_db(db: wgdb.WireguardDb, provider_map: dict[int, bool]) -> None:
     """Sync WireGuard interfaces with database.
 
     Args:

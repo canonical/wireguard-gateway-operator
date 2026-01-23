@@ -93,7 +93,7 @@ def bird_reload(config: str) -> None:
     subprocess.check_call(["birdc", "configure"])  # noqa: S607
 
 
-def bird_sync_db(
+def bird_apply_db(
     db: wgdb.WireguardDb,
     advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
 ) -> None:

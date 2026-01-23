@@ -17,6 +17,7 @@ A link moves through four states:
                the remote side to acknowledge it.
  - open:       The remote side has acknowledged the request and provided its peer endpoint
                information. In this state, the WireGuard interface is created on the system.
+               The link is open doesn't mean that the physical link is connected and healthy.
  - half_close: The local side has requested to remove the link and is waiting for the remote side
                to confirm. The WireGuard interface still exists to avoid dropping traffic if the
                remote side is still sending, but the local side should not send traffic through it.
@@ -49,6 +50,7 @@ class WireguardLinkStatus(enum.StrEnum):
 class WireguardKey(pydantic.BaseModel):
     """WireGuard public/private key pair."""
 
+    # the relation id
     owner: int
     private_key: str
     public_key: str
@@ -60,6 +62,7 @@ class WireguardKey(pydantic.BaseModel):
 class WireguardLink(pydantic.BaseModel):
     """WireGuard link information."""
 
+    # the relation id
     owner: int
     status: WireguardLinkStatus
     opened_at: datetime.datetime | None = None
@@ -120,7 +123,7 @@ class WireguardDb:
             file: Path to the JSON database file.
         """
         self.file = pathlib.Path(file)
-        self._data = self._load()
+        self._data = self._load_or_new()
         if not self.file.exists():
             self._save()
 
@@ -132,7 +135,7 @@ class WireguardDb:
         """
         return datetime.datetime.now(datetime.timezone.utc)
 
-    def _load(self) -> _WireguardDbSchema:
+    def _load_or_new(self) -> _WireguardDbSchema:
         """Load database from file.
 
         Returns:
@@ -144,7 +147,7 @@ class WireguardDb:
             return _WireguardDbSchema()
 
     def _save(self) -> None:
-        """Save database to file."""
+        """Save database to file atomically."""
         tmp_file = self.file.with_suffix(f".{secrets.token_urlsafe(8)}")
         tmp_file.touch(mode=0o600)
         tmp_file.write_text(self._data.model_dump_json(indent=2), encoding="utf-8")
