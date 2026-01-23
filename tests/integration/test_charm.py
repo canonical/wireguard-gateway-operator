@@ -34,9 +34,7 @@ def test_charm(juju: jubilant.Juju, wireguard_gateway_charm_file: str):
     juju.wait(jubilant.all_active)
 
 
-def wait_for_bird_route(
-    juju: jubilant.Juju, unit: str, ipv6: bool, nexthops: int
-) -> list:
+def wait_for_bird_route(juju: jubilant.Juju, unit: str, ipv6: bool, nexthops: int) -> list:
     deadline = time.time() + 30
     while time.time() < deadline:
         all_route = json.loads(

@@ -4,7 +4,6 @@
 """Bird module provides programmable interface for managing BIRD internet routing daemon."""
 
 import ipaddress
-import json
 import pathlib
 import shutil
 import subprocess
@@ -13,6 +12,7 @@ import textwrap
 import jinja2
 from charmlibs import apt
 
+import network
 import wgdb
 
 _BIRD_CONF_TEMPLATE = pathlib.Path(__file__).parent.parent / "templates/bird.conf.j2"
@@ -36,16 +36,6 @@ def bird_install() -> None:
             )
         )
         subprocess.check_call(["sysctl", "--system"])  # noqa: S607
-
-
-def get_router_id() -> str:
-    """Get router ID of this machine.
-
-    Return:
-        Router ID as string.
-    """
-    out = subprocess.check_output(["ip", "-4", "-j", "route", "get", "1.2.3.4"], encoding="utf-8")  # noqa: S607
-    return json.loads(out)[0]["prefsrc"]
 
 
 def bird_config(
@@ -104,7 +94,7 @@ def bird_apply_db(
         advertise_prefixes: List of prefixes to advertise.
     """
     config = bird_config(
-        router_id=get_router_id(),
+        router_id=network.get_router_id(),
         interfaces=db.list_link(),
         advertise_prefixes=advertise_prefixes,
     )
