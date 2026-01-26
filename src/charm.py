@@ -171,8 +171,8 @@ class Charm(ops.CharmBase):
             self._relation_removed(removed_relation)
 
         self._open_ports()
-        bird.bird_apply_db(db=self._wgdb, advertise_prefixes=advertise_prefixes)
         wireguard.wireguard_apply_db(self._wgdb, relation_is_provider)
+        bird.bird_apply_db(db=self._wgdb, advertise_prefixes=advertise_prefixes)
         if invalid_relations:
             raise InvalidRelationDataError(
                 f"relation(s) contains invalid data: {invalid_relations}"

@@ -8,6 +8,7 @@ from charmlibs import systemd
 
 import bird
 import charm
+import network
 import wgdb
 import wireguard
 from tests.unit.helpers import example_public_key
@@ -16,6 +17,12 @@ from tests.unit.helpers import example_public_key
 @pytest.fixture(autouse=True)
 def wgdb_path(tmp_path_factory, monkeypatch):
     monkeypatch.setattr(charm, "WGDB_DIR", tmp_path_factory.mktemp("wgdb"))
+
+
+@pytest.fixture(autouse=True)
+def mock_network(monkeypatch):
+    monkeypatch.setattr(network, "get_router_id", lambda: "172.16.0.0")
+    monkeypatch.setattr(network, "get_network_interface", lambda: "eth0")
 
 
 @pytest.fixture(autouse=True)
@@ -30,7 +37,6 @@ def get_bird_config(monkeypatch):
         return "172.16.0.0"
 
     monkeypatch.setattr(bird, "bird_install", lambda: None)
-    monkeypatch.setattr(bird, "get_router_id", mock_get_router_id)
     monkeypatch.setattr(bird, "bird_reload", mock_bird_reload)
 
     return lambda: bird_config
