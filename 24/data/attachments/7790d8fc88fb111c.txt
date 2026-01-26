@@ -1,0 +1,14 @@
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju status --model jubilant-f40f2247 --format json
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju exec --model jubilant-f40f2247 --format json --unit wireguard-a/0 -- 'ip -6 --json route'
+[32mINFO    [0m integration.test_charm:test_charm.py:43 route on wireguard-a/0: [{'dst': 'fe80::/64', 'dev': 'eth0', 'protocol': 'kernel', 'metric': 256, 'flags': [], 'pref': 'medium'}]
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju exec --model jubilant-f40f2247 --format json --unit wireguard-a/0 -- 'ip -6 --json route'
+[32mINFO    [0m integration.test_charm:test_charm.py:43 route on wireguard-a/0: [{'dst': 'fe80::/64', 'dev': 'eth0', 'protocol': 'kernel', 'metric': 256, 'flags': [], 'pref': 'medium'}]
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju exec --model jubilant-f40f2247 --format json --unit wireguard-a/0 -- 'ip -6 --json route'
+[32mINFO    [0m integration.test_charm:test_charm.py:43 route on wireguard-a/0: [{'dst': 'fe80::/64', 'dev': 'eth0', 'protocol': 'kernel', 'metric': 256, 'flags': [], 'pref': 'medium'}]
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju exec --model jubilant-f40f2247 --format json --unit wireguard-a/0 -- 'ip -6 --json route'
+[32mINFO    [0m integration.test_charm:test_charm.py:43 route on wireguard-a/0: [{'dst': 'fe80::/64', 'dev': 'eth0', 'protocol': 'kernel', 'metric': 256, 'flags': [], 'pref': 'medium'}]
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju exec --model jubilant-f40f2247 --format json --unit wireguard-a/0 -- 'ip -6 --json route'
+[32mINFO    [0m integration.test_charm:test_charm.py:43 route on wireguard-a/0: [{'dst': 'fe80::/64', 'dev': 'eth0', 'protocol': 'kernel', 'metric': 256, 'flags': [], 'pref': 'medium'}]
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju exec --model jubilant-f40f2247 --format json --unit wireguard-a/0 -- 'ip -6 --json route'
+[32mINFO    [0m integration.test_charm:test_charm.py:43 route on wireguard-a/0: [{'dst': 'fe80::/64', 'dev': 'eth0', 'protocol': 'kernel', 'metric': 256, 'flags': [], 'pref': 'medium'}]
+[32mINFO    [0m jubilant:_juju.py:308 cli: juju debug-log --model jubilant-f40f2247 --limit 1000
