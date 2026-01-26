@@ -8,10 +8,21 @@ from charmlibs import systemd
 
 import bird
 import charm
+import keepalived
 import network
 import wgdb
 import wireguard
 from tests.unit.helpers import example_public_key
+
+
+@pytest.fixture(autouse=True)
+def mock_systemd(monkeypatch):
+    monkeypatch.setattr(systemd, "service_enable", lambda _: None)
+    monkeypatch.setattr(systemd, "service_start", lambda _: None)
+    monkeypatch.setattr(systemd, "service_disable", lambda _: None)
+    monkeypatch.setattr(systemd, "service_stop", lambda _: None)
+    monkeypatch.setattr(systemd, "service_running", lambda _: False)
+    monkeypatch.setattr(systemd, "service_reload", lambda _: None)
 
 
 @pytest.fixture(autouse=True)
@@ -44,10 +55,6 @@ def get_bird_config(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def get_wireguard_config(monkeypatch):
-    monkeypatch.setattr(systemd, "service_enable", lambda _: None)
-    monkeypatch.setattr(systemd, "service_start", lambda _: None)
-    monkeypatch.setattr(systemd, "service_disable", lambda _: None)
-    monkeypatch.setattr(systemd, "service_stop", lambda _: None)
     monkeypatch.setattr(wireguard, "wireguard_install", lambda: None)
 
     config: dict[int, wgdb.WireguardLink] = {}
@@ -70,6 +77,15 @@ def get_wireguard_config(monkeypatch):
     monkeypatch.setattr(wireguard, "wireguard_syncconf", mock_wireguard_syncconf)
 
     return lambda: config
+
+
+@pytest.fixture(autouse=True)
+def get_keepalived_config(tmp_path_factory, monkeypatch):
+    monkeypatch.setattr(keepalived, "keepalived_install", lambda: None)
+    mock_file = tmp_path_factory.mktemp("keepalived") / "keepalived.conf"
+    monkeypatch.setattr(keepalived, "_KEEPALIVED_CONF_FILE", mock_file)
+    monkeypatch.setattr(keepalived, "_CHECK_ROUTER_SCRIPT", "/check_route")
+    return mock_file.read_text
 
 
 @pytest.fixture(autouse=True)

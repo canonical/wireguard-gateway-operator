@@ -58,9 +58,9 @@ def _wg_config(interface: wgdb.WireguardLink, is_provider: bool, quick: bool) ->
     peer_config = {
         "PublicKey": interface.peer_public_key,
         "AllowedIPs": (
-            "224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64" + ","
-            if interface.peer_allowed_ips
-            else "" + ", ".join(map(str, interface.peer_allowed_ips))
+            "224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64"
+            + ("," if interface.peer_allowed_ips else "")
+            + ", ".join(map(str, interface.peer_allowed_ips))
         ),
         "Endpoint": interface.peer_endpoint,
         "PersistentKeepalive": 5,
@@ -71,6 +71,7 @@ def _wg_config(interface: wgdb.WireguardLink, is_provider: bool, quick: bool) ->
         )
         interface_config["Table"] = "off"
     config = configparser.ConfigParser()
+    config.optionxform = str
     config["Interface"] = interface_config
     config["Peer"] = peer_config
     buffer = io.StringIO()

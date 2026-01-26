@@ -392,7 +392,9 @@ def test_charm_remove_relation():
     )
 
 
-def test_charm_configure_bird_wireguard(get_bird_config, get_wireguard_config):
+def test_charm_configure_bird_wireguard_keepalived(
+    get_bird_config, get_wireguard_config, get_keepalived_config
+):
     db = load_wgdb()
     db.add_key(
         owner=1,
@@ -415,6 +417,7 @@ def test_charm_configure_bird_wireguard(get_bird_config, get_wireguard_config):
             1: {
                 "ingress-address": "172.16.0.1",
                 "public-keys": example_public_key("remote1", 0),
+                "advertise-prefixes": "10.0.0.0/24",
                 "listen-ports": ":".join(
                     [
                         example_public_key("remote1", 0),
@@ -425,7 +428,9 @@ def test_charm_configure_bird_wireguard(get_bird_config, get_wireguard_config):
             }
         },
     )
-    state_in = testing.State(relations=[relation], config=BASIC_CONFIG)
+    config = dict(BASIC_CONFIG)
+    config["vips"] = "172.16.0.200/24"
+    state_in = testing.State(relations=[relation], config=config)
     ctx.run(ctx.on.config_changed(), state_in)
     assert (
         get_bird_config().strip()
@@ -477,3 +482,43 @@ def test_charm_configure_bird_wireguard(get_bird_config, get_wireguard_config):
     assert wireguard_config.peer_endpoint == "172.16.0.1:50000"
     assert wireguard_config.public_key == example_public_key("local", 0)
     assert wireguard_config.peer_public_key == example_public_key("remote1", 0)
+    assert (
+        get_keepalived_config().strip()
+        == textwrap.dedent(
+            """\
+            global_defs {
+              router_id 172.16.0.0
+            }
+
+            vrrp_script check_route_0 {
+              script "/check_route 10.0.0.0/24"
+              interval 2
+              timeout 1
+              fall 1
+              rise 1
+            }
+
+            vrrp_instance vrrp_0 {
+              state BACKUP
+              interface eth0
+              virtual_router_id 51
+              priority 127
+              advert_int 1
+
+              virtual_ipaddress {
+                172.16.0.200/24 dev eth0
+              }
+            }
+
+            vrrp_sync_group vrrp_group {
+              group {
+                vrrp_0
+              }
+
+              track_script {
+                check_route_0 weight -1
+              }
+            }
+            """
+        ).strip()
+    )

@@ -13,6 +13,7 @@ import typing
 import ops
 
 import bird
+import keepalived
 import relations
 import wgdb
 import wireguard
@@ -119,13 +120,33 @@ class Charm(ops.CharmBase):
         Returns:
             Number of tunnels.
         """
-        val = self.config.get("tunnels")
-        if val is None:
-            raise ValueError("tunnels configuration is missing")
-        tunnels = int(val)
+        value = self.config.get("tunnels")
+        if value is None:
+            raise InvalidConfigError("tunnels configuration is missing")
+        tunnels = int(value)
         if tunnels <= 1:
-            raise ValueError("tunnels configuration must be greater than 1")
+            raise InvalidConfigError("tunnels configuration must be greater than 1")
         return tunnels
+
+    def get_vips(self) -> list[ipaddress.IPv4Interface | ipaddress.IPv6Interface]:
+        """Get VRRP VIPs configuration.
+
+        Returns:
+            VRRP VIPs charm configuration.
+        """
+        value = self.config.get("vips")
+        if not value:
+            return []
+        vips = []
+        for vip in value.split(","):
+            vip = vip.strip()
+            if not vip:
+                continue
+            try:
+                vips.append(ipaddress.ip_interface(vip))
+            except ValueError:
+                raise InvalidConfigError("invalid vip in vips config: {vip}")
+        return vips
 
     def reconcile(self, event: ops.EventBase) -> None:
         """Reconcile the charm.
@@ -145,13 +166,16 @@ class Charm(ops.CharmBase):
     def _reconcile(self) -> None:
         """Holistic reconciliation method."""
         advertise_prefixes = self.get_advertise_prefixes()
+        self.get_vips()
         self.get_number_of_tunnels()
 
         wireguard.wireguard_install()
         bird.bird_install()
+        keepalived.keepalived_install()
 
         invalid_relations = []
         relation_is_provider = {}
+        relation_data = []
 
         for relation_name in (
             WIREGUARD_ROUTER_PROVIDER_RELATION,
@@ -161,7 +185,9 @@ class Charm(ops.CharmBase):
                 is_provider = relation_name == WIREGUARD_ROUTER_PROVIDER_RELATION
                 relation_is_provider[relation.id] = is_provider
                 try:
-                    self._reconcile_relation(relation, is_provider=is_provider)
+                    relation_data.extend(
+                        self._reconcile_relation(relation, is_provider=is_provider).remote_data
+                    )
                 except InvalidRelationDataError:
                     logger.exception("invalid relation date in relation id %s", relation.id)
                     invalid_relations.append(relation)
@@ -173,12 +199,15 @@ class Charm(ops.CharmBase):
         self._open_ports()
         wireguard.wireguard_apply_db(self._wgdb, relation_is_provider)
         bird.bird_apply_db(db=self._wgdb, advertise_prefixes=advertise_prefixes)
+        self._reconcile_keepalived(relation_data)
         if invalid_relations:
             raise InvalidRelationDataError(
                 f"relation(s) contains invalid data: {invalid_relations}"
             )
 
-    def _reconcile_relation(self, relation: ops.Relation, is_provider: bool) -> None:
+    def _reconcile_relation(
+        self, relation: ops.Relation, is_provider: bool
+    ) -> relations.WireguardRouterRelation:
         """Holistic reconciliation method for one relation."""
         try:
             data = relations.WireguardRouterRelation.from_relation(
@@ -192,6 +221,7 @@ class Charm(ops.CharmBase):
         self._relation_add_links(data)
         self._relation_update_links(data)
         self._relation_sync(data)
+        return data
 
     def _relation_add_keys(self, relation: relations.WireguardRouterRelation) -> None:
         while len(self._wgdb.list_keys(relation.id)) < self.get_number_of_tunnels():
@@ -417,6 +447,23 @@ class Charm(ops.CharmBase):
         for link in self._wgdb.list_link(include_half_closed=True):
             ports.append(ops.Port(protocol="udp", port=link.port))
         self.unit.set_ports(*ports)
+
+    def _reconcile_keepalived(
+        self, relation_data: list[relations.WireguardRouterRelationData]
+    ) -> None:
+        """Reconcile keepalived configuration.
+
+        Args:
+            relation_data: remote relation data.
+        """
+        vips = self.get_vips()
+        if not vips:
+            return
+        routes = set()
+        for data in relation_data:
+            for prefix in data.advertise_prefixes:
+                routes.add(prefix)
+        keepalived.keepalived_reload(vips, sorted(routes))
 
 
 if __name__ == "__main__":  # pragma: nocover

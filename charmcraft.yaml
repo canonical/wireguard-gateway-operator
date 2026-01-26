@@ -31,11 +31,12 @@ parts:
     plugin: uv
     build-snaps:
       - astral-uv
-  templates:
+  dump:
     source: .
     plugin: dump
     stage:
       - templates
+      - scripts
 
 provides:
   wireguard-router-a:
@@ -54,3 +55,6 @@ config:
     advertise-prefixes:
       type: string
       description: A comma separated list of ipv4 or ipv6 prefixes.
+    vips:
+      type: string
+      description: A comma separated list of VIPs.
