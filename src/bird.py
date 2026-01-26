@@ -80,7 +80,7 @@ def bird_reload(config: str) -> None:
     """
     if _BIRD_CONF_FILE.read_text(encoding="utf-8") != config:
         _BIRD_CONF_FILE.write_text(config, encoding="utf-8")
-    subprocess.check_call(["birdc", "configure"])  # noqa: S607
+        subprocess.check_call(["birdc", "configure"])  # noqa: S607
 
 
 def bird_apply_db(

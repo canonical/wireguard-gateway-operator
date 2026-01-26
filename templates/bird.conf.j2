@@ -20,7 +20,7 @@ protocol ospf v3 OSPF6 {
 
   area 0.0.0.0 {
 {%- for interface in interfaces %}{{ "\n    " -}}
-    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 5; dead 30; };
+    interface "{{ interface.interface_name }}" { type ptp; cost 10; hello 5; dead 30; };
 {%- endfor %}
 {%- for prefix in ipv6_prefixes %}{{ "\n    " -}}
     stubnet {{ prefix }} { cost 10; };
@@ -36,7 +36,7 @@ protocol ospf v3 OSPF4 {
 
   area 0.0.0.0 {
 {%- for interface in interfaces %}{{ "\n    " -}}
-    interface "wg{{ interface.port }}" { type ptp; cost 10; hello 5; dead 30; };
+    interface "{{ interface.interface_name }}" { type ptp; cost 10; hello 5; dead 30; };
 {%- endfor %}
     stubnet 169.254.0.0/24 { hidden; };
 {%- for prefix in ipv4_prefixes %}{{ "\n    " -}}
