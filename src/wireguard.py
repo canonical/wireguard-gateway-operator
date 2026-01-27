@@ -92,8 +92,9 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
     config = configparser.ConfigParser()
     config.read_string(conf_str)
     private_key = config.get("Interface", "PrivateKey")
-    # public key is not shown in the showconf command
-    # get the public key from the private key instead
+    # The showconf command does not display the public key.
+    # Derive the public key from the private key instead ,the public key is deterministically
+    # derived.
     public_key = generate_public_key(private_key)
     return wgdb.WireguardLink.model_validate(
         {

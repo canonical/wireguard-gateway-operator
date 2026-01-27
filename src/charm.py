@@ -458,6 +458,7 @@ class Charm(ops.CharmBase):
         """
         vips = self.get_vips()
         if not vips:
+            keepalived.keepalived_stop()
             return
         routes = set()
         for data in relation_data:

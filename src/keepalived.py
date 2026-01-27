@@ -25,8 +25,8 @@ def keepalived_install():
 
 
 def _keepalived_render_config(
-        vips: list[ipaddress.IPv4Interface | ipaddress.IPv6Interface],
-        check_routes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
+    vips: list[ipaddress.IPv4Interface | ipaddress.IPv6Interface],
+    check_routes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
 ) -> str:
     """Generate a keepalived configuration.
 
@@ -52,14 +52,14 @@ def _keepalived_render_config(
             interface=network.get_network_interface(),
             vips=vips,
             check_routes=check_routes,
-            check_route_script=_CHECK_ROUTER_SCRIPT,
+            check_route_script=_CHECK_ROUTER_SCRIPT.absolute(),
         )
     )
 
 
 def keepalived_reload(
-        vips: list[ipaddress.IPv4Interface | ipaddress.IPv6Interface],
-        check_routes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
+    vips: list[ipaddress.IPv4Interface | ipaddress.IPv6Interface],
+    check_routes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
 ) -> None:
     """Reload keepalived configuration.
 
@@ -68,13 +68,16 @@ def keepalived_reload(
         check_routes: A list of route destinations used to verify connectivity, route reachability
             is used to decide when VIP failover should occur.
     """
-    current = _KEEPALIVED_CONF_FILE if _KEEPALIVED_CONF_FILE.exists() else ""
+    current = (
+        _KEEPALIVED_CONF_FILE.read_text(encoding="utf-8") if _KEEPALIVED_CONF_FILE.exists() else ""
+    )
     config = _keepalived_render_config(vips, check_routes)
-    if current == config:
-        return
-    _KEEPALIVED_CONF_FILE.write_text(config)
+    changed = current == config
+    if changed:
+        _KEEPALIVED_CONF_FILE.write_text(config)
     if systemd.service_running("keepalived"):
-        systemd.service_reload("keepalived")
+        if changed:
+            systemd.service_reload("keepalived")
     else:
         systemd.service_start("keepalived")
 
