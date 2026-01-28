@@ -4,7 +4,7 @@
 """Fixtures for charm integration tests."""
 
 import pathlib
-import subprocess  # nosec
+import subprocess
 import typing
 from collections.abc import Generator
 
