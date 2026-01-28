@@ -51,10 +51,26 @@ config:
     tunnels:
       type: int
       default: 2
-      description: Number of WireGuard tunnels to create per unit.
+      description: >-
+        Maximum number of WireGuard tunnels to establish per remote unit. If a
+        remote WireGuard gateway contains multiple units, this gateway will 
+        create up to this many tunnels with each remote unit. If the two peers
+        are configured with different values, the effective tunnel count is 
+        the smaller of the two. Increasing this value may improve throughput on
+        multi-core machines when it is CPU-bound.
+
     advertise-prefixes:
       type: string
-      description: A comma separated list of ipv4 or ipv6 prefixes.
+      description: >-
+        Comma-separated list of non-overlapping IPv4 and/or IPv6 prefixes to
+        advertise to other integrated WireGuard gateways. These prefixes 
+        represent the networks reachable from this gateway. Link-local 
+        addresses and broadcast addresses must not be advertised.
+        Example of this configuration: "10.0.0.0/24,2001:db8:100::/64"
+
     vips:
       type: string
-      description: A comma separated list of VIPs.
+      description: >-
+        Comma-separated list of VRRP virtual IP addresses (VIPs) in CIDR notation.
+        Each entry must include an IP address and prefix length.
+        Example: "10.0.0.1/24,2001:db8::1/32"
