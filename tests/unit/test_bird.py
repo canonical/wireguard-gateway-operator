@@ -1,10 +1,11 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import ipaddress
 import importlib
-import unittest.mock
+import ipaddress
 import textwrap
+import unittest.mock
+
 import bird
 import wgdb
 

@@ -17,7 +17,7 @@ _KEEPALIVED_CONF_FILE = pathlib.Path("/etc/keepalived/keepalived.conf")
 _CHECK_ROUTER_SCRIPT = pathlib.Path(__file__).parent.parent / "scripts/check_route"
 
 
-def keepalived_install():
+def keepalived_install() -> None:
     """Install keepalived."""
     if not shutil.which("keepalived"):
         apt.update()
@@ -82,6 +82,6 @@ def keepalived_reload(
         systemd.service_start("keepalived")
 
 
-def keepalived_stop():
+def keepalived_stop() -> None:
     """Stop keepalived service."""
     systemd.service_stop("keepalived")

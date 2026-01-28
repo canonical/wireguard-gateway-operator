@@ -72,11 +72,11 @@ def test_routing(juju: jubilant.Juju):
     juju.wait(jubilant.all_active)
 
     status = juju.status()
-    test_a_unit = list(status.get_units("test-a"))[0]
+    test_a_unit = next(iter(status.get_units("test-a")))
     test_a_address = status.get_units("test-a")[test_a_unit].public_address
-    test_b_unit = list(status.get_units("test-b"))[0]
+    test_b_unit = next(iter(status.get_units("test-b")))
     test_b_address = status.get_units("test-b")[test_b_unit].public_address
-    wireguard_b_unit = list(status.get_units("wireguard-b"))[0]
+    wireguard_b_unit = next(iter(status.get_units("wireguard-b")))
     wireguard_b_address = status.get_units("wireguard-b")[wireguard_b_unit].public_address
 
     juju.exec("sudo ip addr add 192.0.2.2/24 dev eth0", unit=test_a_unit)

@@ -1,12 +1,14 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import wireguard
-import wgdb
 import importlib
 import ipaddress
-import unittest.mock
 import textwrap
+import unittest.mock
+
+import wgdb
+import wireguard
+
 
 def test_wg_config():
     interface = wgdb.WireguardLink(
@@ -27,13 +29,13 @@ def test_wg_config():
         PrivateKey = private_key
         Address = 169.254.0.1/24, fe80::1/64
         Table = off
-    
+
         [Peer]
         PublicKey = peer_public_key
         AllowedIPs = 224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64,10.0.0.0/24
         Endpoint = 1.2.3.4:51820
         PersistentKeepalive = 5
-    
+
         """).strip()
     assert config_str_provider.strip() == expected_provider
 
@@ -44,15 +46,16 @@ def test_wg_config():
         PrivateKey = private_key
         Address = 169.254.0.2/24, fe80::2/64
         Table = off
-    
+
         [Peer]
         PublicKey = peer_public_key
         AllowedIPs = 224.0.0.0/24, ff02::/16, 169.254.0.0/24, fe80::0/64,10.0.0.0/24
         Endpoint = 1.2.3.4:51820
         PersistentKeepalive = 5
-    
+
         """).strip()
     assert config_str_requirer.strip() == expected_requirer
+
 
 def test_wireguard_add(monkeypatch, tmp_path):
     importlib.reload(wireguard)
@@ -82,6 +85,7 @@ def test_wireguard_add(monkeypatch, tmp_path):
     mock_service_enable.assert_called_once_with(f"wg-quick@{interface.interface_name}")
     mock_service_start.assert_called_once_with(f"wg-quick@{interface.interface_name}")
 
+
 def test_wireguard_remove(monkeypatch, tmp_path):
     importlib.reload(wireguard)
     interface = wgdb.WireguardLink(
@@ -109,6 +113,7 @@ def test_wireguard_remove(monkeypatch, tmp_path):
     assert not conf_file.exists()
     mock_service_stop.assert_called_once_with(f"wg-quick@{interface.interface_name}")
     mock_service_disable.assert_called_once_with(f"wg-quick@{interface.interface_name}")
+
 
 def test_wireguard_syncconf(monkeypatch, tmp_path):
     importlib.reload(wireguard)

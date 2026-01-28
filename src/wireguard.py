@@ -71,7 +71,7 @@ def _wg_config(interface: wgdb.WireguardLink, is_provider: bool, quick: bool) ->
         )
         interface_config["Table"] = "off"
     config = configparser.ConfigParser()
-    config.optionxform = str
+    config.optionxform = str  # type: ignore
     config["Interface"] = interface_config
     config["Peer"] = peer_config
     buffer = io.StringIO()
@@ -148,7 +148,7 @@ def wireguard_list() -> list[wgdb.WireguardLink]:
     """
     interfaces = [
         i.strip()
-        for i in subprocess.check_output(["wg", "show", "interfaces"], encoding="ascii").split()
+        for i in subprocess.check_output(["wg", "show", "interfaces"], encoding="ascii").split()  # noqa: S607
     ]
     return [_wg_showconf(i) for i in interfaces]
 

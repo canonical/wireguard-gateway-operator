@@ -178,10 +178,10 @@ class WireguardRouterRelation:
     def remote_data(self) -> list[WireguardRouterRelationData]:
         """Get the remote units relation data.
 
-        Return:
+        Returns:
             The remote units relation data.
         """
-        return [d for d in self._remote_data]
+        return list(self._remote_data)
 
     def search_unit(self, *, public_key: str) -> WireguardRouterRelationData | None:
         """Search for a remote unit by public key.

@@ -134,7 +134,7 @@ class Charm(ops.CharmBase):
         Returns:
             VRRP VIPs charm configuration.
         """
-        value = self.config.get("vips")
+        value = str(self.config.get("vips", ""))
         if not value:
             return []
         vips = []
@@ -441,7 +441,7 @@ class Charm(ops.CharmBase):
                 acknowledged=True,
             )
 
-    def _open_ports(self):
+    def _open_ports(self) -> None:
         """Open the WireGuard ports."""
         ports = []
         for link in self._wgdb.list_link(include_half_closed=True):

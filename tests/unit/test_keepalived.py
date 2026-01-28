@@ -2,9 +2,11 @@
 # See LICENSE file for licensing details.
 
 import ipaddress
-import unittest.mock
 import textwrap
+import unittest.mock
+
 import keepalived
+
 
 def test_keepalived_config(monkeypatch):
     vips = [ipaddress.ip_interface("192.168.1.100/24")]
@@ -50,6 +52,7 @@ def test_keepalived_config(monkeypatch):
     )
     assert config == expected_config
 
+
 def test_keepalived_reload_changed(monkeypatch, tmp_path):
     conf_file = tmp_path / "keepalived.conf"
     conf_file.write_text("old config", encoding="utf-8")
@@ -62,13 +65,14 @@ def test_keepalived_reload_changed(monkeypatch, tmp_path):
     monkeypatch.setattr(keepalived.systemd, "service_running", lambda s: True)
 
     vips = [ipaddress.ip_interface("192.168.1.100/24")]
-    check_routes = []
+    check_routes: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
 
     keepalived.keepalived_reload(vips, check_routes)
 
     assert conf_file.read_text(encoding="utf-8") != "old config"
     mock_service_reload.assert_called_once_with("keepalived")
     mock_service_start.assert_not_called()
+
 
 def test_keepalived_reload_not_running(monkeypatch, tmp_path):
     conf_file = tmp_path / "keepalived.conf"
@@ -82,7 +86,7 @@ def test_keepalived_reload_not_running(monkeypatch, tmp_path):
     monkeypatch.setattr(keepalived.systemd, "service_running", lambda s: False)
 
     vips = [ipaddress.ip_interface("192.168.1.100/24")]
-    check_routes = []
+    check_routes: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
 
     keepalived.keepalived_reload(vips, check_routes)
 
