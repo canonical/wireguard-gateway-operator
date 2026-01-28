@@ -72,7 +72,7 @@ def keepalived_reload(
         _KEEPALIVED_CONF_FILE.read_text(encoding="utf-8") if _KEEPALIVED_CONF_FILE.exists() else ""
     )
     config = _keepalived_render_config(vips, check_routes)
-    changed = current == config
+    changed = current != config
     if changed:
         _KEEPALIVED_CONF_FILE.write_text(config)
     if systemd.service_running("keepalived"):

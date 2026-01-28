@@ -501,7 +501,7 @@ def test_charm_configure_bird_wireguard_keepalived(
             vrrp_instance vrrp_0 {
               state BACKUP
               interface eth0
-              virtual_router_id 51
+              virtual_router_id 1
               priority 127
               advert_int 1
 

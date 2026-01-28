@@ -3,6 +3,8 @@
 
 """Fixtures for charm unit tests."""
 
+import pathlib
+
 import pytest
 from charmlibs import systemd
 
@@ -84,7 +86,7 @@ def get_keepalived_config(tmp_path_factory, monkeypatch):
     monkeypatch.setattr(keepalived, "keepalived_install", lambda: None)
     mock_file = tmp_path_factory.mktemp("keepalived") / "keepalived.conf"
     monkeypatch.setattr(keepalived, "_KEEPALIVED_CONF_FILE", mock_file)
-    monkeypatch.setattr(keepalived, "_CHECK_ROUTER_SCRIPT", "/check_route")
+    monkeypatch.setattr(keepalived, "_CHECK_ROUTER_SCRIPT", pathlib.Path("/check_route"))
     return mock_file.read_text
 
 

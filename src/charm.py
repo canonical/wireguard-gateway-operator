@@ -464,7 +464,7 @@ class Charm(ops.CharmBase):
         for data in relation_data:
             for prefix in data.advertise_prefixes:
                 routes.add(prefix)
-        keepalived.keepalived_reload(vips, sorted(routes))
+        keepalived.keepalived_reload(vips, sorted(routes, key=str))
 
 
 if __name__ == "__main__":  # pragma: nocover

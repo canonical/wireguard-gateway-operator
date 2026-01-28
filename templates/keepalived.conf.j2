@@ -16,7 +16,7 @@ vrrp_script check_route_{{ loop.index0 }} {
 vrrp_instance vrrp_{{ loop.index0 }} {
   state BACKUP
   interface {{ interface }}
-  virtual_router_id {{ loop.index0 }}
+  virtual_router_id {{ 1 + loop.index0 }}
   priority 127
   advert_int 1
 

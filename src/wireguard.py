@@ -149,7 +149,6 @@ def wireguard_list() -> list[wgdb.WireguardLink]:
     interfaces = [
         i.strip()
         for i in subprocess.check_output(["wg", "show", "interfaces"], encoding="ascii").split()
-        # noqa: S607
     ]
     return [_wg_showconf(i) for i in interfaces]
 
