@@ -8,7 +8,7 @@ import configparser
 import io
 import pathlib
 import shutil
-import subprocess
+import subprocess  # nosec
 import time
 
 from charmlibs import apt, systemd
@@ -29,7 +29,7 @@ def generate_public_key(private_key: str) -> str:
     Returns:
         The generated public key.
     """
-    return subprocess.check_output(["wg", "pubkey"], input=private_key, encoding="ascii").strip()  # noqa: S607
+    return subprocess.check_output(["wg", "pubkey"], input=private_key, encoding="ascii").strip()  # nosec # noqa: S607
 
 
 def generate_keypair() -> WireguardKeypair:
@@ -38,7 +38,7 @@ def generate_keypair() -> WireguardKeypair:
     Returns:
         The generated keypair.
     """
-    private_key = subprocess.check_output(["wg", "genkey"], encoding="ascii").strip()  # noqa: S607
+    private_key = subprocess.check_output(["wg", "genkey"], encoding="ascii").strip()  # nosec # noqa: S607
     public_key = generate_public_key(private_key)
     return WireguardKeypair(private_key, public_key)
 
@@ -88,7 +88,7 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
     Returns:
         The WireGuard interface configuration.
     """
-    conf_str = subprocess.check_output(["wg", "showconf", name], encoding="ascii")  # noqa: S607
+    conf_str = subprocess.check_output(["wg", "showconf", name], encoding="ascii")  # nosec # noqa: S607
     config = configparser.ConfigParser()
     config.read_string(conf_str)
     private_key = config.get("Interface", "PrivateKey")
@@ -148,7 +148,7 @@ def wireguard_list() -> list[wgdb.WireguardLink]:
     """
     interfaces = [
         i.strip()
-        for i in subprocess.check_output(["wg", "show", "interfaces"], encoding="ascii").split()  # noqa: S607
+        for i in subprocess.check_output(["wg", "show", "interfaces"], encoding="ascii").split()  # nosec # noqa: S607
     ]
     return [_wg_showconf(i) for i in interfaces]
 
@@ -194,7 +194,7 @@ def wireguard_syncconf(interface: wgdb.WireguardLink, is_provider: bool) -> None
         is_provider: Whether this unit is on the provider of the relation.
     """
     subprocess.check_output(
-        ["wg", "syncconf", interface.interface_name, "/dev/stdin"],  # noqa: S607
+        ["wg", "syncconf", interface.interface_name, "/dev/stdin"],  # nosec # noqa: S607
         input=_wg_config(interface, is_provider=is_provider, quick=False).encode("ascii"),
     )
     wg_quick_config = _WG_QUICK_CONFIG_DIR / f"{interface.interface_name}.conf"
