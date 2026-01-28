@@ -24,6 +24,6 @@ header:
   - 'pyproject.toml'
   - 'zap_rules.tsv'
   - '**/*.md.j2'
-  - 'templates/bird.conf.j2'
+  - 'templates/**'
   - 'uv.lock'
   comment: on-failure
