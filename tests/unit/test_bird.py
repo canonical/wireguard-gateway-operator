@@ -11,6 +11,11 @@ import wgdb
 
 
 def test_bird_config():
+    """
+    arrange: define interfaces and advertise prefixes.
+    act: call bird.bird_config with mocked inputs.
+    assert: check if the generated configuration matches the expected output.
+    """
     interfaces = [
         wgdb.WireguardLink(
             owner=1,
@@ -69,6 +74,11 @@ def test_bird_config():
 
 
 def test_bird_reload_changed(monkeypatch, tmp_path):
+    """
+    arrange: create a temporary bird configuration file with old content and mock subprocess.
+    act: call bird.bird_reload with new configuration.
+    assert: verify the file is updated and birdc configure is called.
+    """
     importlib.reload(bird)
     conf_file = tmp_path / "bird.conf"
     conf_file.write_text("old config", encoding="utf-8")
@@ -84,6 +94,11 @@ def test_bird_reload_changed(monkeypatch, tmp_path):
 
 
 def test_bird_reload_no_change(monkeypatch, tmp_path):
+    """
+    arrange: create a temporary bird configuration file with same content and mock subprocess.
+    act: call bird.bird_reload with the same configuration.
+    assert: verify the file is unchanged and birdc configure is not called.
+    """
     importlib.reload(bird)
     conf_file = tmp_path / "bird.conf"
     conf_file.write_text("same config", encoding="utf-8")

@@ -16,6 +16,11 @@ def db(tmp_path):
 
 
 def test_init(tmp_path):
+    """
+    arrange: define a db file path.
+    act: initialize WireguardDb.
+    assert: verify file existence and initial port counter.
+    """
     db_file = tmp_path / "wg.json"
     db = WireguardDb(db_file)
     assert db_file.exists()
@@ -23,6 +28,11 @@ def test_init(tmp_path):
 
 
 def test_allocate_port(db):
+    """
+    arrange: none.
+    act: allocate ports for provider and check parity.
+    assert: verify ports are within range and follow odd/even parity.
+    """
     port1 = db.allocate_port(is_provider=True)
     assert port1 % 2 == 1
     assert port1 >= _WIREGUARD_PORT_RANGE[0]
@@ -37,6 +47,11 @@ def test_allocate_port(db):
 
 
 def test_key_management(db):
+    """
+    arrange: define keys with owner.
+    act: add, search, retire, and remove keys.
+    assert: verify key states and existence at each step.
+    """
     public_key = example_public_key("wg", 1)
     private_key = example_private_key("wg", 1)
     owner = 123
@@ -68,11 +83,21 @@ def test_key_management(db):
 
 
 def test_key_not_found_on_retire(db):
+    """
+    arrange: none.
+    act: attempt to retire a non-existent key.
+    assert: verify KeyError is raised.
+    """
     with pytest.raises(KeyError, match="public key not found"):
         db.retire_key(example_public_key("wg", 1))
 
 
 def test_link_lifecycle(db):
+    """
+    arrange: setup keys and link parameters.
+    act: go through open, acknowledge open, update, close, acknowledge close, remove link.
+    assert: verify link status and properties at each stage.
+    """
     owner = 100
     local_public_key = example_public_key("wg", 1)
     local_private_key = example_private_key("wg", 1)
@@ -126,6 +151,11 @@ def test_link_lifecycle(db):
 
 
 def test_open_link_missing_key(db):
+    """
+    arrange: none.
+    act: try to open link with missing local key.
+    assert: verify KeyError is raised.
+    """
     with pytest.raises(KeyError, match="public key not found"):
         db.open_link(
             owner=1,
@@ -137,6 +167,11 @@ def test_open_link_missing_key(db):
 
 
 def test_update_link_errors(db):
+    """
+    arrange: add key and open link (half-open).
+    act: try to update peer endpoint on half-open link.
+    assert: verify ValueError is raised.
+    """
     owner = 100
     public_key = example_public_key("wg", 1)
     private_key = example_private_key("wg", 1)
@@ -154,6 +189,11 @@ def test_update_link_errors(db):
 
 
 def test_list_owners(db):
+    """
+    arrange: add keys for different owners, retire one, open link for another.
+    act: call list_owners.
+    assert: verify only active owners with active keys/links are listed.
+    """
     db.add_key(
         owner=1,
         public_key=example_public_key("wg", 1),
@@ -187,6 +227,11 @@ def test_list_owners(db):
 
 
 def test_validate_peer_allowed_ips_objects(db):
+    """
+    arrange: add key and open link with allowed_ips as network objects.
+    act: retrieve the link.
+    assert: verify valid ip network objects are stored.
+    """
     owner = 1
     public_key = example_public_key("wg", 1)
     private_key = example_private_key("wg", 1)
@@ -206,6 +251,11 @@ def test_validate_peer_allowed_ips_objects(db):
 
 
 def test_interface_name_property(db):
+    """
+    arrange: add key and open link.
+    act: retrieve link and access interface_name.
+    assert: verify interface name formatting.
+    """
     owner = 1
     public_key = example_public_key("wg", 1)
     private_key = example_private_key("wg", 1)
@@ -223,6 +273,11 @@ def test_interface_name_property(db):
 
 
 def test_allocate_port_wraparound(db, monkeypatch):
+    """
+    arrange: mock limited port range and fill some ports.
+    act: allocate keys until exhaustion.
+    assert: verify correct allocation and eventual ValueError.
+    """
     monkeypatch.setattr(wgdb, "_WIREGUARD_PORT_RANGE", (50000, 50004))
 
     p1 = db.allocate_port(is_provider=True)
@@ -264,15 +319,30 @@ def test_allocate_port_wraparound(db, monkeypatch):
 
 
 def test_search_key_not_found(db):
+    """
+    arrange: none.
+    act: search for non-existent key.
+    assert: verify return is none.
+    """
     assert db.search_key(example_public_key("wg", 1)) is None
 
 
 def test_link_action_not_found(db):
+    """
+    arrange: none.
+    act: try to acknowledge nonexistent link.
+    assert: verify KeyError.
+    """
     with pytest.raises(KeyError, match="link not found"):
         db.acknowledge_open_link(example_public_key("wg", 1), example_public_key("wg", 2), "ep")
 
 
 def test_update_link_endpoint_change(db):
+    """
+    arrange: add key and open link with endpoint.
+    act: update link with new endpoint.
+    assert: verify endpoint is updated.
+    """
     owner = 1
     public_key = example_public_key("wg", 1)
     private_key = example_private_key("wg", 1)
@@ -296,6 +366,11 @@ def test_update_link_endpoint_change(db):
 
 
 def test_list_keys_filtered(db):
+    """
+    arrange: add keys for different owners.
+    act: list keys filtered by owner.
+    assert: verify only matching keys are returned.
+    """
     db.add_key(
         owner=1,
         public_key=example_public_key("wg", 1),

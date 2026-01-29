@@ -9,6 +9,11 @@ import keepalived
 
 
 def test_keepalived_config(monkeypatch):
+    """
+    arrange: define vips and check routes.
+    act: call keepalived._keepalived_render_config.
+    assert: verify generated configuration against expected string.
+    """
     vips = [ipaddress.ip_interface("192.168.1.100/24")]
     check_routes = [ipaddress.ip_network("10.0.0.0/24")]
 
@@ -54,6 +59,11 @@ def test_keepalived_config(monkeypatch):
 
 
 def test_keepalived_reload_changed(monkeypatch, tmp_path):
+    """
+    arrange: create old config file and mock systemd (running).
+    act: call keepalived.keepalived_reload.
+    assert: verify config file updated and service reloaded.
+    """
     conf_file = tmp_path / "keepalived.conf"
     conf_file.write_text("old config", encoding="utf-8")
     monkeypatch.setattr(keepalived, "_KEEPALIVED_CONF_FILE", conf_file)
@@ -75,6 +85,11 @@ def test_keepalived_reload_changed(monkeypatch, tmp_path):
 
 
 def test_keepalived_reload_not_running(monkeypatch, tmp_path):
+    """
+    arrange: mock systemd (not running).
+    act: call keepalived.keepalived_reload.
+    assert: verify service started instead of reloaded.
+    """
     conf_file = tmp_path / "keepalived.conf"
 
     monkeypatch.setattr(keepalived, "_KEEPALIVED_CONF_FILE", conf_file)

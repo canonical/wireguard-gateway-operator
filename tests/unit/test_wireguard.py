@@ -11,6 +11,11 @@ import wireguard
 
 
 def test_wg_config():
+    """
+    arrange: create a WireguardLink object.
+    act: generate wireguard configuration string for provider and requirer.
+    assert: verify that the generated configuration matches the expected output for both cases.
+    """
     interface = wgdb.WireguardLink(
         owner=1,
         status=wgdb.WireguardLinkStatus.OPEN,
@@ -58,6 +63,11 @@ def test_wg_config():
 
 
 def test_wireguard_add(monkeypatch, tmp_path):
+    """
+    arrange: reload wireguard module and mock systemd functions and config directory.
+    act: call wireguard.wireguard_add.
+    assert: verify config file is created and service is enabled and started.
+    """
     importlib.reload(wireguard)
     interface = wgdb.WireguardLink(
         owner=1,
@@ -87,6 +97,11 @@ def test_wireguard_add(monkeypatch, tmp_path):
 
 
 def test_wireguard_remove(monkeypatch, tmp_path):
+    """
+    arrange: create a dummy config file and mock systemd functions.
+    act: call wireguard.wireguard_remove.
+    assert: verify config file is removed and service is stopped and disabled.
+    """
     importlib.reload(wireguard)
     interface = wgdb.WireguardLink(
         owner=1,
@@ -116,6 +131,11 @@ def test_wireguard_remove(monkeypatch, tmp_path):
 
 
 def test_wireguard_syncconf(monkeypatch, tmp_path):
+    """
+    arrange: reload module, mock subprocess and config directory.
+    act: call wireguard.wireguard_syncconf.
+    assert: verify wg syncconf is called and config file exists.
+    """
     importlib.reload(wireguard)
     interface = wgdb.WireguardLink(
         owner=1,

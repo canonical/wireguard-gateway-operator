@@ -28,6 +28,11 @@ BASIC_CONFIG = {"tunnels": 2, "advertise-prefixes": "2001:DB8::/32, 192.0.2.0/24
     ],
 )
 def test_charm_populate_public_key_in_relation(relation_name: str):
+    """
+    arrange: create context, relation, and state with basic config.
+    act: run config_changed event.
+    assert: verify public keys are populated in local unit data and db.
+    """
     ctx = testing.Context(charm.Charm)
     relation = testing.Relation(endpoint=relation_name)
     state_in = testing.State(relations=[relation], config=BASIC_CONFIG)
@@ -51,6 +56,11 @@ def test_charm_populate_public_key_in_relation(relation_name: str):
     ],
 )
 def test_charm_populate_listen_ports_in_relation(relation_name: str):
+    """
+    arrange: create context with remote unit data.
+    act: run config_changed event.
+    assert: verify listen ports are populated in local unit data, and links are created in db.
+    """
     ctx = testing.Context(charm.Charm)
     relation = testing.Relation(
         id=1,
@@ -97,6 +107,11 @@ def test_charm_populate_listen_ports_in_relation(relation_name: str):
 
 
 def test_requirer_response_listen_ports_in_relation():
+    """
+    arrange: setup db with local keys and relation with remote public keys/listen ports.
+    act: run config_changed event.
+    assert: verify local unit data parses listen ports and links are open in db.
+    """
     db = load_wgdb()
     db.add_key(
         owner=1,
@@ -187,6 +202,11 @@ def test_requirer_response_listen_ports_in_relation():
 
 @pytest.mark.parametrize("remote_public_keys", [1, 2, 3])
 def test_nonequal_public_key_numbers(remote_public_keys):
+    """
+    arrange: create context with variable number of remote public keys.
+    act: run config_changed event.
+    assert: verify correct number of listen ports and links created.
+    """
     ctx = testing.Context(charm.Charm)
     relation = testing.Relation(
         id=1,
@@ -218,6 +238,11 @@ def test_nonequal_public_key_numbers(remote_public_keys):
     ],
 )
 def test_remote_remove_listen_ports(relation_name: str):
+    """
+    arrange: setup db with pre-existing links and context where remote data changes.
+    act: run config_changed event.
+    assert: verify links are closed/updated correctly in db when listen-ports is removed in remote.
+    """
     db = load_wgdb()
     for i in range(3):
         db.add_key(
@@ -318,6 +343,11 @@ def test_remote_remove_listen_ports(relation_name: str):
     ],
 )
 def test_remote_remove_public_keys(relation_name: str, link_state: wgdb.WireguardLinkStatus):
+    """
+    arrange: setup db with pre-existing links and context where remote data changes.
+    act: run config_changed event.
+    assert: verify links are closed in db when public key is removed in the remote.
+    """
     db = load_wgdb()
     db.add_key(
         owner=1,
@@ -365,6 +395,11 @@ def test_remote_remove_public_keys(relation_name: str, link_state: wgdb.Wireguar
 
 
 def test_charm_remove_relation():
+    """
+    arrange: setup db with keys and links.
+    act: run config_changed event with empty relations.
+    assert: verify keys are retired and links are closed when relation is removed.
+    """
     db = load_wgdb()
     db.add_key(
         owner=1,
@@ -395,6 +430,11 @@ def test_charm_remove_relation():
 def test_charm_configure_bird_wireguard_keepalived(
     get_bird_config, get_wireguard_config, get_keepalived_config
 ):
+    """
+    arrange: setup db and context/relation with remote data including advertise-prefixes.
+    act: run config_changed event.
+    assert: verify bird, wireguard, and keepalived configurations are generated correctly.
+    """
     db = load_wgdb()
     db.add_key(
         owner=1,

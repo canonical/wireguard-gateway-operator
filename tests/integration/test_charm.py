@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.abort_on_fail
 def test_charm(juju: jubilant.Juju, wireguard_gateway_charm_file: str):
+    """
+    arrange: deploy two ubuntu units and two wireguard-gateway applications.
+    act: integrate the two wireguard-gateway applications.
+    assert: wait for all units to be active.
+    """
     juju.deploy("ubuntu", "test-a")
     juju.deploy("ubuntu", "test-b")
     juju.deploy(
@@ -56,6 +61,11 @@ def wait_for_bird_route(juju: jubilant.Juju, unit: str, dst: str, nexthops: int)
 
 
 def test_route_table(juju: jubilant.Juju):
+    """
+    arrange: get the status of the deployment.
+    act: wait for bird routes to be propagated.
+    assert: verify that bird routes are established with correct nexthops on both sides.
+    """
     status = juju.status()
 
     for unit in status.get_units("wireguard-a"):
@@ -68,6 +78,11 @@ def test_route_table(juju: jubilant.Juju):
 
 
 def test_routing(juju: jubilant.Juju):
+    """
+    arrange: configure vips and ip addresses on test and wireguard units.
+    act: add routes and execute ping commands between test units.
+    assert: verify success of ping commands to confirm routing.
+    """
     juju.config("wireguard-a", {"vips": "203.0.113.2/24"})
     juju.wait(jubilant.all_active)
 
