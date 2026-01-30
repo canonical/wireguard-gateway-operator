@@ -58,10 +58,10 @@ config:
       description: >-
         Maximum number of WireGuard tunnels to establish per remote unit. If a
         remote WireGuard gateway contains multiple units, this gateway will 
-        create up to this many tunnels with each remote unit. If the two peers
-        are configured with different values, the effective tunnel count is 
-        the smaller of the two. Increasing this value may improve throughput on
-        multi-core machines when it is CPU-bound.
+        create up to configured number of with each remote unit. If the two 
+        peers are configured with different values, the effective tunnel count
+        is the smaller of the two. Increasing this value may improve throughput
+        on multi-core machines when it is CPU-bound.
 
     advertise-prefixes:
       type: string

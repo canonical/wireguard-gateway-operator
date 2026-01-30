@@ -20,7 +20,7 @@ _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
 _SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
-def bird_install() -> None:
+def bird_ensure_installed() -> None:
     """Install BIRD using apt if not installed."""
     if not shutil.which("birdc"):
         apt.update()
@@ -38,7 +38,7 @@ def bird_install() -> None:
         subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
 
 
-def bird_config(
+def bird_generate_config(
     router_id: str,
     interfaces: list[wgdb.WireguardLink],
     advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
@@ -93,7 +93,7 @@ def bird_apply_db(
         db: WireGuard database.
         advertise_prefixes: List of prefixes to advertise.
     """
-    config = bird_config(
+    config = bird_generate_config(
         router_id=network.get_router_id(),
         interfaces=db.list_link(),
         advertise_prefixes=advertise_prefixes,

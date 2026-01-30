@@ -170,7 +170,7 @@ class Charm(ops.CharmBase):
         self.get_number_of_tunnels()
 
         wireguard.wireguard_install()
-        bird.bird_install()
+        bird.bird_ensure_installed()
         keepalived.keepalived_install()
 
         invalid_relations = []

@@ -49,7 +49,7 @@ def get_bird_config(monkeypatch):
     def mock_get_router_id():
         return "172.16.0.0"
 
-    monkeypatch.setattr(bird, "bird_install", lambda: None)
+    monkeypatch.setattr(bird, "bird_ensure_installed", lambda: None)
     monkeypatch.setattr(bird, "bird_reload", mock_bird_reload)
 
     return lambda: bird_config

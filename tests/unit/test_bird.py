@@ -30,7 +30,7 @@ def test_bird_config():
     ]
     advertise_prefixes = [ipaddress.ip_network("192.168.1.0/24")]
 
-    config = bird.bird_config("1.1.1.1", interfaces, advertise_prefixes)
+    config = bird.bird_generate_config("1.1.1.1", interfaces, advertise_prefixes)
 
     expected = textwrap.dedent("""\
         router id 1.1.1.1;

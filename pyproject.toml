@@ -16,7 +16,7 @@ classifiers = [
 dependencies = [
  "charmlibs-apt>=1.0.0.post0",
  "charmlibs-systemd>=1.0.0",
- "jinja2>=3.1.6",
+ "jinja2==3.1.6",
  "ops==3.3.1",
  "pydantic>=2.12.5",
 ]
@@ -42,11 +42,8 @@ static = [ "bandit[toml]" ]
 integration = [
   "allure-pytest>=2.8.18",
   "allure-pytest-collection-report @ git+https://github.com/canonical/data-platform-workflows@v24.0.0#subdirectory=python/pytest_plugins/allure_pytest_collection_report",
-  "jubilant==1.4",
-  "juju==3.6.*",
+  "jubilant",
   "pytest",
-  "pytest-asyncio",
-  "pytest-operator",
 ]
 
 [tool.uv]
