@@ -51,9 +51,9 @@ def wait_for_bird_route(juju: jubilant.Juju, unit: str, dst: str, nexthops: int)
         logger.info(f"route on {unit}: {all_route}")
         for route in all_route:
             if (
-                route["dst"] == dst
-                and len(route.get("nexthops", [])) >= nexthops
-                and route["protocol"] == "bird"
+                    route["dst"] == dst
+                    and len(route["nexthops"]) >= nexthops
+                    and route["protocol"] == "bird"
             ):
                 return route
         time.sleep(3)
@@ -107,3 +107,16 @@ def test_routing(juju: jubilant.Juju):
 
     juju.exec("ping 198.51.100.2 -I 192.0.2.2 -c 1", unit=test_a_unit)
     juju.exec("ping 192.0.2.2 -I 198.51.100.2 -c 1", unit=test_b_unit)
+
+
+def test_bird_metrics(juju: jubilant.Juju):
+    juju.deploy("opentelemetry-collector", channel="2/stable", base="ubuntu@24.04")
+    juju.integrate("wireguard-a:cos-agent", "opentelemetry-collector")
+    juju.integrate("wireguard-b:cos-agent", "opentelemetry-collector")
+    juju.wait(lambda s: jubilant.all_active(s, "wireguard-a", "wireguard-b") and jubilant.all_blocked(status, "opentelemetry-collector"))
+
+    status = juju.status()
+    for unit in status.get_units("wireguard-a"):
+        juju.exec("curl -m 10 localhost:9324/metrics", unit=unit)
+    for unit in status.get_units("wireguard-b"):
+        juju.exec("curl -m 10 localhost:9324/metrics", unit=unit)

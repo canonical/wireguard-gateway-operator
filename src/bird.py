@@ -10,17 +10,27 @@ import subprocess  # nosec
 import textwrap
 
 import jinja2
+from charmlibs import apt, systemd
 
 import network
 import wgdb
 
 _BIRD_CONF_TEMPLATE = pathlib.Path(__file__).parent.parent / "templates/bird.conf.j2"
 _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
+_BIRD_EXPORTER_CONF_FILE = pathlib.Path("/etc/default/prometheus-bird-exporter")
 _SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
-def bird_to_install() -> list[str]:
-    """BIRD apt packages need to be installed."""
+def bird_ensure_installed() -> None:
+    """Install BIRD using apt if not installed."""
+    if not shutil.which("birdc"):
+        apt.update()
+        apt.add_package("bird2")
+    if not shutil.which("prometheus-bird-exporter"):
+        apt.update()
+        apt.add_package("prometheus-bird-exporter")
+        _BIRD_EXPORTER_CONF_FILE.write_text('ARGS="-bird.v2"', encoding="utf-8")
+        systemd.service_restart("prometheus-bird-exporter")
     if not _SYSCTL_FILE.exists():
         _SYSCTL_FILE.touch()
         _SYSCTL_FILE.write_text(
@@ -32,9 +42,6 @@ def bird_to_install() -> list[str]:
             )
         )
         subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
-    if not shutil.which("birdc"):
-        return ["bird2"]
-    return []
 
 
 def bird_generate_config(
