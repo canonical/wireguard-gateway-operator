@@ -26,6 +26,7 @@ jobs:
       juju-channel: ${{ matrix.juju-channel }}
       provider: 'lxd'
       with-uv: true
+      self-hosted-runner: 'true'
   allure-report:
     if: always() && !cancelled()
     needs:
