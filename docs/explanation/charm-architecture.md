@@ -1,122 +1,88 @@
 # Charm architecture
 
-Add overview material here:
+At its core, the WireGuard gateway charm is a highly available, high-performance site-to-site VPN solution that can be used to connect multiple network environments.
 
-1. What kind of application is it? What kind of software does it use?
-2. Describe Pebble services.
+It uses WireGuard, a modern and secure VPN protocol, to provide encrypted and authenticated tunnels. It also uses BIRD and Keepalived to provide network high availability and link redundancy using OSPF, ECMP, and VRRP.
 
-<!-- Example text
-At its core, the __charm_name__ charm is <software> that does <brief description>.
+## High-level overview of WireGuard gateway charm deployment
 
-The charm design leverages the [sidecar](https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers) pattern to allow multiple containers in each pod with [Pebble](https://documentation.ubuntu.com/juju/3.6/reference/pebble/) running as the workload container’s entrypoint.
+The following diagram shows a typical deployment of the WireGuard gateway charm in three separate network environments, each containing a WireGuard gateway charm. The three WireGuard gateway charms are integrated with charm relations and forward traffic between the three network environments through encrypted WireGuard tunnels.
 
-Pebble is a lightweight, API-driven process supervisor that is responsible for configuring processes to run in a container and controlling those processes throughout the workload lifecycle.
-
-Pebble `services` are configured through [layers](https://github.com/canonical/pebble#layer-specification), and the following containers represent each one a layer forming the effective Pebble configuration, or `plan`:
-
-1. Container 1, which does this and that.
-2. Container 2, which does that and this.
-3. And so on.
-
-
-As a result, if you run a `kubectl get pods` on a namespace named for the Juju model you've deployed the __charm_name__ charm into, you'll see something like the following:
-
-```bash
-NAME                             READY   STATUS    RESTARTS   AGE
-__charm_name__-0                   N/N     Running   0         6h4m
+```{mermaid}
+C4Context
+    title WireGuard gateway charm deployment
+    Boundary(network-a, "Network A") {
+        Component(wireguard-a, "WireGuard gateway")
+    }
+    Boundary(network-b, "Network B") {
+        Component(wireguard-b, "WireGuard gateway")
+    }
+    Boundary(network-c, "Network C") {
+        Component(wireguard-c, "WireGuard gateway")
+    }
+    Rel(wireguard-a, wireguard-b, "WireGuard router relation")
+    Rel(wireguard-c, wireguard-b, "WireGuard router relation")
+    Rel(wireguard-a, wireguard-c, "WireGuard router relation")
+    UpdateRelStyle(wireguard-a, wireguard-b, $offsetY="-50", $offsetX="-40")
+    UpdateRelStyle(wireguard-a, wireguard-c, $offsetY="-50", $offsetX="-40")
 ```
-
-This shows there are <NUMBER> containers - <describe what the containers are>.
--->
-
-## High-level overview of __charm_name__ deployment
-
-The following diagram shows a typical deployment of the __charm_name__ charm.
-<!-- 
-    Provide a brief description of the deployment here. Is it a Kubernetes cloud, a VM, or both?
-    What other charms are included in this deployment? 
--->
-
-<!-- Include a Mermaid diagram of the charm deployment here. 
-     Use one container per charm; the point of this high-level overview is to show
-     a typical deployment and not provide a detailed breakdown of any of the charms.
-     Provide a brief description of the relations (for instance, "provides connection",
-     "caches storage", or "provides database"). More information on how to create mermaid diagrams
-     can be found in https://canonical-platform-engineering.readthedocs-hosted.com/en/latest/engineering-practices/documentation/architecture-diagram-guidance/
--->
 
 ## Charm architecture
 
-The following diagram shows the architecture of the __charm_name__ charm:
+The following diagram shows the architecture of the WireGuard gateway charm:
 
-<!-- Include a Mermaid diagram of the charm here. 
-     Limit the scope of this diagram to the charm only.
-     How is the charm containerized? Include those separate pieces in this diagram.
--->
-
-### Containers
-
-Configuration files for the containers can be found in the respective directories that define the rock.
-
-<!--
-#### Container example
-
-Description of container.
-
-The workload that this container is running is defined in the [<container-name> rock](link to rock).
--->
-
-## OCI images
-
-We use [Rockcraft](https://canonical-rockcraft.readthedocs-hosted.com/en/latest/) to build OCI Images for __charm_name__.
-The images are defined in [__charm_name__ rock](link to rock).
-They are published to [Charmhub](https://charmhub.io/), the official repository of charms.
-
-> See more: [How to publish your charm on Charmhub](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/howto/manage-charms/#publish-a-charm-on-charmhub)
+![WireGuard gateway charm architecture diagram](./wireguard-gateway-charm.png)
 
 ## Metrics
 
-<!--
-If the charm uses metrics, include a list under reference/metrics.md and link that document here.
-If the charm uses containers, you may include text here like:
-
-Inside the above mentioned containers, additional Pebble layers are defined in order to provide metrics.
-See [metrics](link-to-metrics-document) for more information.
--->
+The WireGuard gateway charm provides Prometheus metrics. The full list of metrics can be found [here](../reference/metrics.md).
 
 ## Juju events
 
 For this charm, the following Juju events are observed:
 
-<!--
-Numbered list of Juju events. Link to describe the event in more detail (either in Juju docs or in a specific charm's docs). When is the event fired? What does the event indicate/mean?
--->
+1. {ref}`config-changed <juju:hook-config-changed>`
+2. {ref}`upgrade-charm <juju:hook-upgrade-charm>`
+3. {ref}`update-status <juju:hook-update-status>`
+4. {ref}`wireguard-router-a-relation-changed <juju:hook-relation-changed>`,  
+5. {ref}`wireguard-router-a-relation-broken <juju:hook-relation-broken>`,
+6. {ref}`wireguard-router-a-relation-joined <juju:hook-relation-joined>`,
+7. {ref}`wireguard-router-a-relation-departed <juju:hook-relation-departed>`:
+8. {ref}`wireguard-router-b-relation-changed <juju:hook-relation-changed>`,  
+9. {ref}`wireguard-router-b-relation-broken <juju:hook-relation-broken>`,
+10. {ref}`wireguard-router-b-relation-joined <juju:hook-relation-joined>`,
+11. {ref}`wireguard-router-b-relation-departed <juju:hook-relation-departed>`:
 
-> See more in the Juju docs: [Hook](https://documentation.ubuntu.com/juju/latest/user/reference/hook/)
+During all of those events, the charm runs the same reconciliation process to update the configuration, including relation data, WireGuard configuration, BIRD configuration, and Keepalived configuration, based on the current charm configuration and remote relation data.
+
+```{note}
+See more in the Juju docs: {ref}`juju:hook`
+```
 
 ## Charm code overview
 
-The `src/charm.py` is the default entry point for a charm and has the <relevant-charm-class> Python class which inherits
-from CharmBase. CharmBase is the base class from which all charms are formed, defined
-by [Ops](https://ops.readthedocs.io/en/latest/index.html) (Python framework for developing charms).
+The `src/charm.py` file is the default entry point for the WireGuard gateway charm. It creates an instance of the `Charm` class, which inherits from `ops.CharmBase`. `ops.CharmBase` is the base class from which all charms are derived, provided by [Ops](https://ops.readthedocs.io/en/latest/index.html) (the Python framework for developing charms).
 
-> See more in the Juju docs: [Charm](https://documentation.ubuntu.com/juju/latest/user/reference/charm/)
+```{note}
+See more in the Juju docs: {ref}`juju:charm`
+```
 
-The `__init__` method guarantees that the charm observes all events relevant to its operation and handles them.
+The `__init__` method of `Charm` ensures that the charm observes
+and handles all events relevant to its operation.
 
-Take, for example, when a configuration is changed by using the CLI.
+For example, when a configuration is changed via the CLI:
 
-1. User runs the configuration command:
+1. The user runs the configuration command:
 
 ```bash
-juju config <relevant-charm-configuration>
+juju config wireguard-gateway advertise-prefixes="2 years"
 ```
 
 2. A `config-changed` event is emitted.
-3. In the `__init__` method is defined how to handle this event like this:
+3. In the `__init__` method, the handler for this event is defined as follows:
 
 ```python
-self.framework.observe(self.on.config_changed, self._on_config_changed)
+self.framework.observe(self.on.config_changed, self.reconcile)
 ```
 
-4. The method `_on_config_changed`, for its turn, will take the necessary actions such as waiting for all the relations to be ready and then configuring the containers.
+4. The `reconcile` method, in turn, takes the necessary actions, such as updating relation(s) and updating WireGuard/BIRD/Keepalived configurations.
