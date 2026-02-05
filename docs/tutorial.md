@@ -102,9 +102,9 @@ App          Version  Status   Scale  Charm              Channel  Rev  Exposed  
 wireguard-a           blocked      1  wireguard-gateway             0  no       no advertise-prefixes configured
 wireguard-b           blocked      1  wireguard-gateway             1  no       no advertise-prefixes configured
 
-Unit            Workload  Agent  Machine  Public address  Ports  Message
-wireguard-a/0*  blocked   idle   0        10.212.71.231          no advertise-prefixes configured
-wireguard-b/0*  blocked   idle   1        10.212.71.52           no advertise-prefixes configured
+Unit            Workload  Agent      Machine  Public address  Ports            Message
+wireguard-a/0*  active    idle       0        10.212.71.231   50001,50003/udp  advertising prefixes: 192.0.2.0/24
+wireguard-b/0*  active    idle       1        10.212.71.52    50000,50002/udp  advertising prefixes: 198.51.100.0/24
 
 Machine  State    Address        Inst id        Base          AZ           Message
 0        started  10.212.71.231  juju-fc22ca-0  ubuntu@24.04  workstation  Running
@@ -166,26 +166,32 @@ juju exec --unit test-a/0 sudo ip route add 198.51.100.0/24 via 192.0.2.1
 juju exec --unit test-b/0 sudo ip route add 192.0.2.0/24 via 198.51.100.1
 ```
 
+Now we can validate routing by running a simple ping command. We use the `-I 192.0.2.2` parameter here to select the source IP address for the ping packet, so that the source IP is within the range of the two test networks we set up and the return path is clear.
+
+```
+juju exec --unit test-a/0 -- ping 198.51.100.2 -I 192.0.2.2 -c 5
+```
+
+From the ping command results, the packet is successfully sent by the `test-a` machine to the `wireguard-a` machine, then forwarded to the `wireguard-b` machine. The `wireguard-b` machine then forwards the packet to the `test-b` machine. The ping reply packet travels along the same path in reverse, from `test-b` to `wireguard-b` to `wireguard-a` to `test-a`.
+
+```{terminal}
+:output-only:
+
+PING 198.51.100.2 (198.51.100.2) from 192.0.2.2 : 56(84) bytes of data.
+64 bytes from 198.51.100.2: icmp_seq=1 ttl=62 time=0.196 ms
+64 bytes from 198.51.100.2: icmp_seq=2 ttl=62 time=0.198 ms
+64 bytes from 198.51.100.2: icmp_seq=3 ttl=62 time=0.236 ms
+64 bytes from 198.51.100.2: icmp_seq=4 ttl=62 time=0.284 ms
+64 bytes from 198.51.100.2: icmp_seq=5 ttl=62 time=0.277 ms
+
+--- 198.51.100.2 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4129ms
+rtt min/avg/max/mdev = 0.196/0.238/0.284/0.037 ms
+```
+
 ## Clean up the environment
 
 Congratulations! You successfully deployed the WireGuard gateway charm.
 
 You can clean up your environment by following this guide:
 {ref}`Tear down your test environment <juju:tear-things-down>`
-
-## Next steps
-
-You achieved a basic deployment of the WordPress charm. If you want to go farther in your deployment
-or learn more about the charm, check out these pages:
-
-- Perform basic operations with your deployment like
-  [installing plugins](how_to_install_plugins)
-  or [themes](how_to_install_themes).
-- Set up monitoring for your deployment by
-  [integrating with the Canonical Observability Stack (COS)](how_to_integrate_with_cos).
-- Make your deployment more secure by [enabling antispam](how_to_enable_antispam) or
-  [rotating secrets](how_to_rotate_secrets),
-  and learn more about the charm's security in
-  [Security overview](explanation_security_overview).
-- Learn more about the available [relation endpoints](reference_relation_endpoints)
-  for the WordPress charm.
