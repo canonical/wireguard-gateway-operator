@@ -52,7 +52,7 @@ Apart from this required integration, the charm can be integrated with other Juj
 
 ## Project and community
 
-The WordPress Operator is a member of the Ubuntu family. 
+The WireGuard gateway Operator is a member of the Ubuntu family. 
 It's an open source project that warmly welcomes community projects, contributions, suggestions, fixes and constructive feedback.
 
 - [Code of conduct](https://ubuntu.com/community/code-of-conduct)
