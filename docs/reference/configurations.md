@@ -1,5 +1,7 @@
 # Configurations
 
-See [Configurations](link to configurations page).
+See [Configurations](https://charmhub.io/wireguard-gateway/configurations).
 
-> Read more about configurations in the Juju docs: [Configuration](https://documentation.ubuntu.com/juju/latest/user/reference/configuration/)
+```{note}
+Read more about configurations in the Juju docs: {ref}`juju:configuration`
+```

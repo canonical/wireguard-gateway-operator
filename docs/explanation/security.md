@@ -1,26 +1,8 @@
 # Security overview
 
-<!-- Remember to update this file for your charm!!
+The WireGuard gateway charm uses WireGuard as the VPN protocol for site-to-site traffic. WireGuard is a modern VPN solution that uses state-of-the-art cryptography reviewed by cryptographers. It has been designed with ease of implementation and simplicity in mind to minimize the attack surface.
 
-This document outlines the security design of the charm along common risks and
-possible best practices.
+You can learn more about the security of the WireGuard protocol from the [WireGuard technical paper](https://www.wireguard.com/papers/wireguard.pdf)
+and [Formal Verification of the WireGuard protocol](https://www.wireguard.com/formal-verification/).
 
-Elaborate on topics such as common risks, good practices, built-in protection, etc.
-
-Are there upstream security docs that we can point to? If so, include a
-sentence like:
-For details regarding upstream __charm_name__ configuration and broader security
-considerations, please refer to the [official <software> documentation](link-to-upstream-docs).
-
-## Risks
-In most cases, it will be appropriate to include a specific heading
-Risks under which known risks are listed and described. Include a subheading for best
-practices for the user to follow to avoid or limit risks.
-
-## Information security
-In some cases a product will have particular information security implications
-(concerned with potential for information loss, incorrect retention, unlawful disclosure
-and so on). Notes on these should be gathered separately in the overview topic, or
-in a topic of their own.
-
--->
+WireGuard gateway charm leverages the asymmetric cryptographic properties of the WireGuard protocol to ensure that only public keys are exchanged between charms, and private keys never leave the machine.

@@ -1,11 +1,9 @@
 # Integrations
 
-<!-- Use the template below to add information about integrations supported by this charm. -->
-
 ### Integration example
 
-_Interface_:   
-_Supported charms_: 
+_Interface_: `wireguard-router-a`
+_Supported charms_: WireGuard gateway charms
 
 Description here.
 
