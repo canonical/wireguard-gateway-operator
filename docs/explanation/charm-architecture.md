@@ -1,3 +1,5 @@
+(explanation_charm_architecture)=
+
 # Charm architecture
 
 At its core, the WireGuard gateway charm is a highly available, high-performance site-to-site VPN solution that can be used to connect multiple network environments.
@@ -44,14 +46,14 @@ For this charm, the following Juju events are observed:
 1. {ref}`config-changed <juju:hook-config-changed>`
 2. {ref}`upgrade-charm <juju:hook-upgrade-charm>`
 3. {ref}`update-status <juju:hook-update-status>`
-4. {ref}`wireguard-router-a-relation-changed <juju:hook-relation-changed>`,  
-5. {ref}`wireguard-router-a-relation-broken <juju:hook-relation-broken>`,
-6. {ref}`wireguard-router-a-relation-joined <juju:hook-relation-joined>`,
-7. {ref}`wireguard-router-a-relation-departed <juju:hook-relation-departed>`:
-8. {ref}`wireguard-router-b-relation-changed <juju:hook-relation-changed>`,  
-9. {ref}`wireguard-router-b-relation-broken <juju:hook-relation-broken>`,
-10. {ref}`wireguard-router-b-relation-joined <juju:hook-relation-joined>`,
-11. {ref}`wireguard-router-b-relation-departed <juju:hook-relation-departed>`:
+4. {ref}`wireguard-router-a-relation-changed <juju:hook-relation-changed>`
+5. {ref}`wireguard-router-a-relation-broken <juju:hook-relation-broken>`
+6. {ref}`wireguard-router-a-relation-joined <juju:hook-relation-joined>`
+7. {ref}`wireguard-router-a-relation-departed <juju:hook-relation-departed>`
+8. {ref}`wireguard-router-b-relation-changed <juju:hook-relation-changed>`
+9. {ref}`wireguard-router-b-relation-broken <juju:hook-relation-broken>`
+10. {ref}`wireguard-router-b-relation-joined <juju:hook-relation-joined>`
+11. {ref}`wireguard-router-b-relation-departed <juju:hook-relation-departed>`
 
 During all of those events, the charm runs the same reconciliation process to update the configuration, including relation data, WireGuard configuration, BIRD configuration, and Keepalived configuration, based on the current charm configuration and remote relation data.
 
@@ -70,12 +72,12 @@ See more in the Juju docs: {ref}`juju:charm`
 The `__init__` method of `Charm` ensures that the charm observes
 and handles all events relevant to its operation.
 
-For example, when a configuration is changed via the CLI:
+For example, when a configuration is changed using the CLI:
 
 1. The user runs the configuration command:
 
 ```bash
-juju config wireguard-gateway advertise-prefixes="2 years"
+juju config wireguard-gateway advertise-prefixes="10.0.0.0/8"
 ```
 
 2. A `config-changed` event is emitted.

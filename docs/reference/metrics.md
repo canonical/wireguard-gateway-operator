@@ -1,3 +1,5 @@
+(reference_metrics)=
+
 ## Metrics
 
 The [BIRD exporter](https://github.com/czerwonk/bird_exporter) inside the WireGuard gateway charm provides the following metrics:
@@ -36,4 +38,4 @@ The [BIRD exporter](https://github.com/czerwonk/bird_exporter) inside the WireGu
 * **bird_protocol_prefix_preferred_count**: Number of preferred routes
 * **bird_protocol_up**: Protocol is up
 * **bird_protocol_uptime**: Uptime of the protocol in seconds
-* **bird_socket_query_success**: Result of querying bird socket: 0 = failed, 1 = suceeded
+* **bird_socket_query_success**: Result of querying bird socket: 0 = failed, 1 = succeeded

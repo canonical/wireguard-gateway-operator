@@ -6,7 +6,9 @@ myst:
 
 (tutorial_index)=
 
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
 # Deploy the WireGuard gateway charm for the first time
+<!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 The `wireguard-gateway` charm helps you deploy a high-performance, highly available WireGuard site-to-site VPN. This tutorial will walk you through each step to create a basic WireGuard gateway deployment with two WireGuard gateway charms.
 
@@ -74,7 +76,9 @@ your usual work, create a new model in the MicroK8s controller using the followi
 juju add-model wireguard-tutorial
 ```
 
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
 ## Deploy WireGuard gateway charms
+<!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 Start off by deploying two WireGuard gateway charm. By default it will deploy the latest stable release of
 the `wireguard-gateway` charm.
@@ -95,6 +99,8 @@ juju integrate wireguard-a:wireguard-router-a wireguard-b:wireguard-router-b
 Run `juju status` to check the current status of the deployment. The output should be similar to the following:
 
 ```{terminal}
+:output-only:
+
 Model               Controller  Cloud/Region         Version  SLA          Timestamp
 wireguard-tutorial  lxd         localhost/localhost  3.6.11   unsupported  16:42:44+08:00
 
@@ -159,7 +165,9 @@ juju exec --unit wireguard-b/0 sudo ip addr add 198.51.100.1/24 dev eth0
 juju exec --unit test-b/0 sudo ip addr add 198.51.100.2/24 dev eth0
 ```
 
+<!-- vale Canonical.025a-latinisms-with-english-equivalents = NO -->
 Now add routes on the `test-a` to route all traffic to `198.51.100.0/24` via `wireguard-a` and on the `test-b` to route all traffic to `192.0.2.0/24` via `wireguard-b`.
+<!-- vale Canonical.025a-latinisms-with-english-equivalents = YES -->
 
 ```
 juju exec --unit test-a/0 sudo ip route add 198.51.100.0/24 via 192.0.2.1

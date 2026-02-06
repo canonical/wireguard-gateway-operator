@@ -1,4 +1,12 @@
+---
+myst:
+  html_meta:
+    "description lang=en": "A Juju charm deploying a highly available, high-performance site-to-site VPN based on WireGuard."
+---
+
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
 # WireGuard gateway operator
+<!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 A [Juju](https://juju.is/) [charm](https://documentation.ubuntu.com/juju/3.6/reference/charm/) deploying a highly available, high-performance site-to-site VPN based on WireGuard.
 
@@ -12,10 +20,10 @@ This charm will make operating highly available, high-performance site-to-site V
 
 ## In this documentation
 
-|                                                                                                               |                                                                                              |
-|---------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| [Tutorials](./tutorial.md)</br>  Get started - a hands-on introduction to using the charm for new users </br> | [How-to guides](./how-to) </br> Step-by-step guides covering key operations and common tasks |
-| [Reference](./reference) </br> Technical information - specifications, APIs, architecture                     | [Explanation](./explanation) </br> Concepts - discussion and clarification of key topics     |
+|                                                                                                               |                                                                                                       |
+|---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| [Tutorials](./tutorial.md)</br>  Get started - a hands-on introduction to using the charm for new users </br> | [How-to guides](./how-to/index.md) </br> Step-by-step guides covering key operations and common tasks |
+| [Reference](./reference/index.md) </br> Technical information - specifications, APIs, architecture            | [Explanation](./explanation/index.md) </br> Concepts - discussion and clarification of key topics     |
 
 ## Contributing to this documentation
 
@@ -35,15 +43,18 @@ It's an open source project that warmly welcomes community projects, contributio
 
 - [Code of conduct](https://ubuntu.com/community/code-of-conduct)
 - [Get support](https://discourse.charmhub.io/)
-- [Contribute](CONTRIBUTING.md)
+- [Contribute](./how-to/contribute.md)
 - [Matrix](https://matrix.to/#/#charmhub-charmdev:ubuntu.com)
 
 Thinking about using the WireGuard gateway operator for your next project? 
 [Get in touch](https://matrix.to/#/#charmhub-charmdev:ubuntu.com)!
 
-# Contents
 
-1. [Tutorial](./tutorial.md)
-1. [How-to](./how-to)
-1. [Reference](./reference)
-1. [Explanation](./explanation)
+```{toctree}
+:hidden:
+Tutorial <tutorial>
+how-to/index.md
+reference/index.md
+explanation/index.md
+Changelog <changelog.md>
+```

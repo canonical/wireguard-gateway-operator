@@ -1,3 +1,5 @@
+(reference_integrations)=
+
 # Integrations
 
 ### Integration example

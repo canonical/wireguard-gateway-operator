@@ -1,3 +1,5 @@
+(explanation_security)=
+
 # Security overview
 
 The WireGuard gateway charm uses WireGuard as the VPN protocol for site-to-site traffic. WireGuard is a modern VPN solution that uses state-of-the-art cryptography reviewed by cryptographers. It has been designed with ease of implementation and simplicity in mind to minimize the attack surface.
