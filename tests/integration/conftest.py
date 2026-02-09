@@ -3,6 +3,8 @@
 
 """Fixtures for charm integration tests."""
 
+import pathlib
+import subprocess  # nosec
 import typing
 from collections.abc import Generator
 
@@ -10,14 +12,24 @@ import jubilant
 import pytest
 
 
-@pytest.fixture(scope="module", name="charm")
-def charm_fixture(pytestconfig: pytest.Config):
-    """Get value from parameter charm-file."""
+@pytest.fixture(name="wireguard_gateway_charm_file", scope="session")
+def wireguard_gateway_charm_file_fixture(pytestconfig: pytest.Config):
+    """Build or get the wireguard-gateway charm file."""
     charm = pytestconfig.getoption("--charm-file")
-    use_existing = pytestconfig.getoption("--use-existing", default=False)
-    if not use_existing:
-        assert charm, "--charm-file must be set"
-    return charm
+    if charm:
+        return charm
+
+    try:
+        subprocess.run(
+            ["charmcraft", "pack", "--bases-index=0"], check=True, capture_output=True, text=True
+        )  # nosec B603, B607
+    except subprocess.CalledProcessError as exc:
+        raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
+
+    charm_path = pathlib.Path(__file__).parent.parent.parent
+    charms = [p.absolute() for p in charm_path.glob("wireguard-gateway_*.charm")]
+    assert charms, "wireguard-gateway .charm file not found"
+    return str(charms[0])
 
 
 @pytest.fixture(scope="session", name="juju")
