@@ -10,7 +10,6 @@ import subprocess  # nosec
 import textwrap
 
 import jinja2
-from charmlibs import apt
 
 import network
 import wgdb
@@ -20,11 +19,8 @@ _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
 _SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
-def bird_ensure_installed() -> None:
-    """Install BIRD using apt if not installed."""
-    if not shutil.which("birdc"):
-        apt.update()
-        apt.add_package("bird2")
+def bird_to_install() -> list[str]:
+    """BIRD apt packages need to be installed."""
     if not _SYSCTL_FILE.exists():
         _SYSCTL_FILE.touch()
         _SYSCTL_FILE.write_text(
@@ -36,6 +32,9 @@ def bird_ensure_installed() -> None:
             )
         )
         subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
+    if not shutil.which("birdc"):
+        return ["bird2"]
+    return []
 
 
 def bird_generate_config(

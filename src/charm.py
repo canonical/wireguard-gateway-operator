@@ -11,6 +11,7 @@ import pathlib
 import typing
 
 import ops
+from charmlibs import apt
 
 import bird
 import keepalived
@@ -166,12 +167,16 @@ class Charm(ops.CharmBase):
     def _reconcile(self) -> None:
         """Holistic reconciliation method."""
         advertise_prefixes = self.get_advertise_prefixes()
-        self.get_vips()
+        vips = self.get_vips()
         self.get_number_of_tunnels()
 
-        wireguard.wireguard_install()
-        bird.bird_ensure_installed()
-        keepalived.keepalived_install()
+        packages = []
+        packages.extend(wireguard.wireguard_to_install())
+        packages.extend(bird.bird_to_install())
+        packages.extend(keepalived.keepalived_to_install())
+        if packages:
+            apt.update()
+            apt.add_package(packages)
 
         invalid_relations = []
         relation_is_provider = {}
@@ -199,7 +204,7 @@ class Charm(ops.CharmBase):
         self._open_ports()
         wireguard.wireguard_apply_db(self._wgdb, relation_is_provider)
         bird.bird_apply_db(db=self._wgdb, advertise_prefixes=advertise_prefixes)
-        self._reconcile_keepalived(relation_data)
+        self._reconcile_keepalived(vips=vips, relation_data=relation_data)
         if invalid_relations:
             raise InvalidRelationDataError(
                 f"relation(s) contains invalid data: {invalid_relations}"
@@ -449,14 +454,16 @@ class Charm(ops.CharmBase):
         self.unit.set_ports(*ports)
 
     def _reconcile_keepalived(
-        self, relation_data: list[relations.WireguardRouterRelationData]
+        self,
+        vips: list[ipaddress.IPv4Interface | ipaddress.IPv6Interface],
+        relation_data: list[relations.WireguardRouterRelationData],
     ) -> None:
         """Reconcile keepalived configuration.
 
         Args:
+            vips: VRRP vips configuration.
             relation_data: remote relation data.
         """
-        vips = self.get_vips()
         if not vips:
             keepalived.keepalived_stop()
             return

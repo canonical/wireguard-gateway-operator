@@ -8,7 +8,7 @@ import pathlib
 import shutil
 
 import jinja2
-from charmlibs import apt, systemd
+from charmlibs import systemd
 
 import network
 
@@ -17,11 +17,11 @@ _KEEPALIVED_CONF_FILE = pathlib.Path("/etc/keepalived/keepalived.conf")
 _CHECK_ROUTER_SCRIPT = pathlib.Path(__file__).parent.parent / "scripts/check_route"
 
 
-def keepalived_install() -> None:
-    """Install keepalived."""
+def keepalived_to_install() -> list[str]:
+    """Apt packages to install for keepalived."""
     if not shutil.which("keepalived"):
-        apt.update()
-        apt.add_package("keepalived")
+        return ["keepalived"]
+    return []
 
 
 def _keepalived_render_config(

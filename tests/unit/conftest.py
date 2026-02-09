@@ -49,7 +49,7 @@ def get_bird_config(monkeypatch):
     def mock_get_router_id():
         return "172.16.0.0"
 
-    monkeypatch.setattr(bird, "bird_ensure_installed", lambda: None)
+    monkeypatch.setattr(bird, "bird_to_install", lambda: [])
     monkeypatch.setattr(bird, "bird_reload", mock_bird_reload)
 
     return lambda: bird_config
@@ -57,7 +57,7 @@ def get_bird_config(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def get_wireguard_config(monkeypatch):
-    monkeypatch.setattr(wireguard, "wireguard_install", lambda: None)
+    monkeypatch.setattr(wireguard, "wireguard_to_install", lambda: [])
 
     config: dict[int, wgdb.WireguardLink] = {}
 
@@ -83,7 +83,7 @@ def get_wireguard_config(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def get_keepalived_config(tmp_path_factory, monkeypatch):
-    monkeypatch.setattr(keepalived, "keepalived_install", lambda: None)
+    monkeypatch.setattr(keepalived, "keepalived_to_install", lambda: [])
     mock_file = tmp_path_factory.mktemp("keepalived") / "keepalived.conf"
     monkeypatch.setattr(keepalived, "_KEEPALIVED_CONF_FILE", mock_file)
     monkeypatch.setattr(keepalived, "_CHECK_ROUTER_SCRIPT", pathlib.Path("/check_route"))

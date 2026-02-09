@@ -11,7 +11,7 @@ import shutil
 import subprocess  # nosec
 import time
 
-from charmlibs import apt, systemd
+from charmlibs import systemd
 
 import wgdb
 
@@ -133,11 +133,11 @@ def _wg_config_equal(left: wgdb.WireguardLink, right: wgdb.WireguardLink) -> boo
     )
 
 
-def wireguard_install() -> None:
-    """Install WireGuard package."""
+def wireguard_to_install() -> list[str]:
+    """WireGuard apt package need to be installed."""
     if not shutil.which("wg-quick"):
-        apt.update()
-        apt.add_package("wireguard")
+        return ["wireguard"]
+    return []
 
 
 def wireguard_list() -> list[wgdb.WireguardLink]:
