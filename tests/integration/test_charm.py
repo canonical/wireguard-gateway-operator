@@ -52,7 +52,7 @@ def wait_for_bird_route(juju: jubilant.Juju, unit: str, dst: str, nexthops: int)
         for route in all_route:
             if (
                 route["dst"] == dst
-                and len(route["nexthops"]) >= nexthops
+                and len(route.get("nexthops", [])) >= nexthops
                 and route["protocol"] == "bird"
             ):
                 return route
