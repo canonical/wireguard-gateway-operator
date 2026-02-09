@@ -1,28 +1,29 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-# This file configures Charmcraft.
-# See https://canonical-charmcraft.readthedocs-hosted.com/stable/howto/manage-charmcraft/ 
-# for guidance.
 
 type: charm
-name: platform-engineering-charm-template
-title: Charm Template
-summary: A very short one-line summary of the charm.
+name: wireguard-gateway
+title: WireGuard gateway
+summary: WireGuard site-to-site VPN charm.
 links:
   documentation: https://discourse.charmhub.io
-  issues: https://github.com/canonical/platform-engineering-charm-template/issues
-  source: https://github.com/canonical/platform-engineering-charm-template
+  issues: https://github.com/canonical/wireguard-gateway-operator/issues
+  source: https://github.com/canonical/wireguard-gateway-operator
   contact: https://launchpad.net/~canonical-is-devops
 
 description: |
-  A single sentence that says what the charm is, concisely and memorably.
-
-  A paragraph of one to three short sentences, that describe what the charm does.
-
-  A third paragraph that explains what need the charm meets.
-
-  Finally, a paragraph that describes whom the charm is useful for.
-
+  The WireGuard gateway charm provides site-to-site VPN connections between 
+  multiple networks.
+  
+  This charm simplifies the deployment of a highly available WireGuard VPN mesh,
+  including WireGuard key exchange, OSPF-based routing configuration and 
+  handling of link failures and failover, and VRRP-based virtual IPs for a
+  high-performance, highly available, and secure site-to-site VPN solution.
+  
+  This charm makes operating a WireGuard site-to-site VPN straightforward for
+  DevOps or SRE teams through Juju's clean interface. It allows deployment into
+  multiple environments to test changes and supports scaling out for enterprise
+  deployments.
 
 base: ubuntu@24.04
 platforms:
@@ -30,38 +31,50 @@ platforms:
 
 parts:
   charm:
-    plugin: charm
     source: .
+    plugin: uv
+    build-snaps:
+      - astral-uv
+  dump:
+    source: .
+    plugin: dump
+    stage:
+      - templates
+      - scripts
 
-# The containers and resources metadata apply to Kubernetes charms only.
-# Remove them if not required.
+provides:
+  wireguard-router-a:
+    interface: wireguard_router
 
-# Your workload’s containers.
-containers:
-  httpbin:
-    resource: httpbin-image
+requires:
+  wireguard-router-b:
+    interface: wireguard_router
 
-# This field populates the Resources tab on Charmhub.
-resources:
-  # An OCI image resource for each container listed above.
-  # You may remove this if your charm will run without a workload sidecar container.
-  httpbin-image:
-    type: oci-image
-    description: OCI image for httpbin
-    # The upstream-source field is ignored by Juju. It is included here as a reference
-    # so the integration testing suite knows which image to deploy during testing. This field
-    # is also used by the 'canonical/charming-actions' Github action for automated releasing.
-    upstream-source: kennethreitz/httpbin
-
-# See https://canonical-charmcraft.readthedocs-hosted.com/stable/reference/files/config-yaml-file/
-# for guidance.
 config:
   options:
-    # An example config option to customise the log level of the workload
-    log-level:
-      description: |
-        Configures the log level of gunicorn. 
+    tunnels:
+      type: int
+      default: 2
+      description: >-
+        Maximum number of WireGuard tunnels to establish per remote unit. If a
+        remote WireGuard gateway contains multiple units, this gateway will 
+        create up to configured number of tunnels with each remote unit. If the
+        two peers are configured with different values, the effective tunnel 
+        count is the smaller of the two. Increasing this value may improve
+        throughput on multi-core machines when it is CPU-bound.
 
-        Acceptable values are: "info", "debug", "warning", "error" and "critical"
-      default: "info"
+    advertise-prefixes:
       type: string
+      description: >-
+        Comma-separated list of non-overlapping IPv4 and/or IPv6 prefixes to
+        advertise to other integrated WireGuard gateways. These prefixes 
+        represent the networks reachable from this gateway. Link-local 
+        addresses and broadcast addresses must not be advertised.
+        Example of this configuration: "10.0.0.0/24,2001:db8:100::/64"
+
+    vips:
+      type: string
+      description: >-
+        Comma-separated list of VRRP virtual IP addresses (VIPs) in CIDR notation.
+        Each entry must include an IP address and prefix length.
+        Example: "10.0.0.1/24,2001:db8::1/32"
