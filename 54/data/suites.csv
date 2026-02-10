@@ -1,0 +1,16 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+    arrange: configure vips and ip addresses on test and wireguard units.
+    act: add routes and execute ping commands between test units.
+    assert: verify success of ping commands to confirm routing.
+    ","636972","test_routing","tests.integration","2026-02-10","broken","2026-02-10","","test_charm","",""
+"
+    arrange: get the status of the deployment.
+    act: wait for bird routes to be propagated.
+    assert: verify that bird routes are established with correct nexthops on both sides.
+    ","35675","test_route_table","tests.integration","2026-02-10","broken","2026-02-10","","test_charm","",""
+"
+    arrange: deploy two ubuntu units and two wireguard-gateway applications.
+    act: integrate the two wireguard-gateway applications.
+    assert: wait for all units to be active.
+    ","159758","test_charm","tests.integration","2026-02-10","broken","2026-02-10","","test_charm","",""
