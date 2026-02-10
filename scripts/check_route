@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+import argparse
+import ipaddress
+import json
+import subprocess
+import sys
+
+
+def check_route(prefix: str) -> bool:
+    """
+    Determine whether the system routing table contains a BIRD route to a given prefix.
+
+    Args:
+        prefix: An IPv4 or IPv6 prefix in CIDR notation.
+
+    Returns:
+        True if the route exists, False otherwise.
+    """
+    prefix_network = ipaddress.ip_network(prefix, strict=False)
+    out = subprocess.check_output(
+        ["ip", f"-{prefix_network.version}", "-j", "route"],
+        encoding="utf-8",
+        stderr=subprocess.DEVNULL,
+    )  # noqa: S607
+    out_json = json.loads(out)
+    for route in out_json:
+        if route["protocol"] != "bird":
+            continue
+        try:
+            dst = ipaddress.ip_network(route["dst"])
+        except ValueError:
+            continue
+        if dst.supernet_of(prefix_network):
+            return True
+    return False
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="check BIRD route to an IPv4/IPv6.")
+    parser.add_argument("prefix", help="CIDR prefix, e.g. 10.0.0.0/8 or 2001:db8::/32")
+    args = parser.parse_args()
+    if not check_route(prefix=args.prefix):
+        sys.exit(1)
