@@ -21,27 +21,14 @@ _BIRD_EXPORTER_CONF_FILE = pathlib.Path("/etc/default/prometheus-bird-exporter")
 _SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
-def bird_ensure_installed() -> None:
-    """Install BIRD using apt if not installed."""
+def bird_to_install() -> list[str]:
+    """Apt packages to install for BIRD."""
+    packages = []
     if not shutil.which("birdc"):
-        apt.update()
-        apt.add_package("bird2")
+        packages.append("bird2")
     if not shutil.which("prometheus-bird-exporter"):
-        apt.update()
-        apt.add_package("prometheus-bird-exporter")
-        _BIRD_EXPORTER_CONF_FILE.write_text('ARGS="-bird.v2"', encoding="utf-8")
-        systemd.service_restart("prometheus-bird-exporter")
-    if not _SYSCTL_FILE.exists():
-        _SYSCTL_FILE.touch()
-        _SYSCTL_FILE.write_text(
-            textwrap.dedent(
-                """\
-                net.ipv4.ip_forward = 1
-                net.ipv6.conf.all.forwarding = 1
-                """
-            )
-        )
-        subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
+        packages.append("prometheus-bird-exporter")
+    return packages
 
 
 def bird_generate_config(
@@ -99,6 +86,22 @@ def bird_apply_db(
         db: WireGuard database.
         advertise_prefixes: List of prefixes to advertise.
     """
+    if (
+        not _BIRD_EXPORTER_CONF_FILE.exists()
+        or _BIRD_EXPORTER_CONF_FILE.read_text(encoding="utf-8") != 'ARGS="-bird.v2"'
+    ):
+        _BIRD_EXPORTER_CONF_FILE.write_text('ARGS="-bird.v2"', encoding="utf-8")
+        systemd.service_restart("prometheus-bird-exporter")
+    if not _SYSCTL_FILE.exists():
+        _SYSCTL_FILE.write_text(
+            textwrap.dedent(
+                """\
+                net.ipv4.ip_forward = 1
+                net.ipv6.conf.all.forwarding = 1
+                """
+            )
+        )
+        subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
     config = bird_generate_config(
         router_id=network.get_router_id(),
         interfaces=db.list_link(),

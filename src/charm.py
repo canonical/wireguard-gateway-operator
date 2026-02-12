@@ -12,14 +12,13 @@ import typing
 
 import ops
 from charmlibs import apt
+from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 
 import bird
 import keepalived
 import relations
 import wgdb
 import wireguard
-
-from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 
 logger = logging.getLogger(__name__)
 
