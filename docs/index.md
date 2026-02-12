@@ -12,9 +12,9 @@ A [Juju](https://juju.is/) [charm](https://documentation.ubuntu.com/juju/3.6/ref
 
 Like any Juju charm, this charm supports one-line deployment, configuration, integration, scaling, and more. For the Charmed WireGuard gateway, this includes:
 
-* automatic WireGuard key exchange and interface management
-* automatic route management and fault tolerance using OSPF on BIRD
-* virtual redundant routing using VRRP on keepalived
+* Automatic WireGuard key exchange and interface management
+* Automatic route management and fault tolerance using OSPF on BIRD
+* Virtual redundant routing using VRRP on Keepalived
 
 This charm will make operating highly available, high-performance site-to-site VPN simple and straightforward for DevOps or SRE teams through Juju's clean interface. 
 
@@ -22,15 +22,15 @@ This charm will make operating highly available, high-performance site-to-site V
 
 |                                                                                                               |                                                                                                       |
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| [Tutorials](./tutorial.md)</br>  Get started - a hands-on introduction to using the charm for new users </br> | [How-to guides](./how-to/index.md) </br> Step-by-step guides covering key operations and common tasks |
-| [Reference](./reference/index.md) </br> Technical information - specifications, APIs, architecture            | [Explanation](./explanation/index.md) </br> Concepts - discussion and clarification of key topics     |
+| {ref}`Tutorial <tutorial_index>`</br>  Get started - a hands-on introduction to using the charm for new users </br> | {ref}`How-to guides <how_to>` </br> Step-by-step guides covering key operations and common tasks |
+| {ref}`Reference <reference>` </br> Technical information - specifications, APIs, architecture            | {ref}`Explanation <explanation>` </br> Concepts - discussion and clarification of key topics     |
 
 ## Contributing to this documentation
 
 Documentation is an important part of this project, and we take the same open-source approach
 to the documentation as the code. As such, we welcome community contributions, suggestions, and
 constructive feedback on our documentation.
-See [How to contribute](./how-to/contribute.md) for more information.
+See {ref}`How to contribute <how_to_contribute>` for more information.
 
 
 If there's a particular area of documentation that you'd like to see that's missing, please 
@@ -43,7 +43,7 @@ It's an open source project that warmly welcomes community projects, contributio
 
 - [Code of conduct](https://ubuntu.com/community/code-of-conduct)
 - [Get support](https://discourse.charmhub.io/)
-- [Contribute](./how-to/contribute.md)
+- {ref}`Contribute <how_to_contribute>`
 - [Matrix](https://matrix.to/#/#charmhub-charmdev:ubuntu.com)
 
 Thinking about using the WireGuard gateway operator for your next project? 

@@ -6,7 +6,7 @@ myst:
 
 (how_to)=
 
-# How-to
+# How-to guides
 
 The following guides cover key processes and common tasks for managing and using the WireGuard gateway charm.
 

@@ -17,7 +17,7 @@ juju integrate wireguard-gateway:cos-agent opentelemetry-collector
 
 ## Integrate with Prometheus charm
 
-Once the WireGuard gateway charm is integrated with the OpenTelemetry collector charm, you can integrate the OpenTelemetry collector charm with the [Prometheus K8s](https://charmhub.io/prometheus-k8s) charm using the `send-remote-write` relation of the OpenTelemetry collector charm using a cross-model relation. This will instruct the OpenTelemetry collector charm to send all WireGuard gateway metrics to the remote Prometheus instance.
+Once the WireGuard gateway charm is integrated with the OpenTelemetry collector charm, you can integrate the OpenTelemetry collector charm with the [Prometheus K8s](https://charmhub.io/prometheus-k8s) charm with the `send-remote-write` relation of the OpenTelemetry collector charm using a cross-model relation. This relation will instruct the OpenTelemetry collector charm to send all WireGuard gateway metrics to the remote Prometheus instance.
 
 ```
 juju consume k8s:admin/cos.prometheus
@@ -25,19 +25,19 @@ juju integrate opentelemetry-collector:send-remote-write prometheus
 ```
 
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
-## Integrate with Loki charm
+## Integrate with Loki
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
-You can integrate the OpenTelemetry collector charm with the [Loki K8s](https://charmhub.io/loki-k8s) charm using the `send-remote-write` relation of the OpenTelemetry collector charm using a cross-model relation. This will instruct the OpenTelemetry collector charm to send all logs on the machine to the remote Loki instance.
+You can integrate the OpenTelemetry collector charm with the [Loki K8s](https://charmhub.io/loki-k8s) charm with the `send-remote-write` relation of the OpenTelemetry collector charm using a cross-model relation. This relation will instruct the OpenTelemetry collector charm to send all logs on the machine to the remote Loki instance.
 
 ```
 juju consume k8s:admin/cos.loki
 juju integrate opentelemetry-collector:send-loki-logs loki
 ```
 
-## Integrate with Grafana charm
+## Integrate with Grafana
 
-You can integrate the OpenTelemetry collector charm with the [Grafana K8s](https://charmhub.io/grafana-k8s) charm using the `grafana-dashboards-provider` relation of the OpenTelemetry collector charm using a cross-model relation. This will instruct the OpenTelemetry collector charm to relay the WireGuard gateway Grafana dashboard to the remote Grafana instance.
+You can integrate the OpenTelemetry collector charm with the [Grafana K8s](https://charmhub.io/grafana-k8s) charm with the `grafana-dashboards-provider` relation of the OpenTelemetry collector charm using a cross-model relation. This relation will instruct the OpenTelemetry collector charm to relay the WireGuard gateway Grafana dashboard to the remote Grafana instance.
 
 ```
 juju consume k8s:admin/cos.grafana

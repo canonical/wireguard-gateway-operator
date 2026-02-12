@@ -9,9 +9,9 @@ A [Juju](https://juju.is/) [charm](https://documentation.ubuntu.com/juju/3.6/ref
 
 Like any Juju charm, this charm supports one-line deployment, configuration, integration, scaling, and more. For the Charmed WireGuard gateway, this includes:
 
-* automatic WireGuard key exchange and interface management
-* automatic route management and fault tolerance using OSPF on BIRD
-* virtual redundant routing using VRRP on keepalived
+* Automatic WireGuard key exchange and interface management
+* Automatic route management and fault tolerance using OSPF on BIRD
+* Virtual redundant routing using VRRP on Keepalived
 
 For information about how to deploy, integrate, and manage this charm, see the official [WireGuard gateway documentation](./docs).
 

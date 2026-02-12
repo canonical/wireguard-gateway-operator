@@ -4,9 +4,9 @@ myst:
     "description lang=en": "The WireGuard gateway charm tutorial that walks a user through a basic WireGuard gateway deployment."
 ---
 
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
 (tutorial_index)=
 
-<!-- vale Canonical.007-Headings-sentence-case = NO -->
 # Deploy the WireGuard gateway charm for the first time
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
@@ -15,7 +15,7 @@ The `wireguard-gateway` charm helps you deploy a high-performance, highly availa
 ## What you'll do
 
 1. Deploy [WireGuard gateway charms](https://charmhub.io/wireguard-gateway)
-2. Peering between two WireGuard gateway charms
+2. Peer between two WireGuard gateway charms
 3. Test the routing
 4. Clean up the environment
 
@@ -88,7 +88,7 @@ juju deploy wireguard-gateway wireguard-a
 juju deploy wireguard-gateway wireguard-b
 ```
 
-## Peering between two WireGuard gateway charms 
+## Peer between two WireGuard gateway charms 
 
 Now we need to integrate the two WireGuard gateway charms using the `wireguard-route-a` and `wireguard-router-b` relation {ref}`interface <juju:relation>` so they will establish WireGuard tunnels and forward network packets between them. `wireguard-route-a` and `wireguard-router-b` are interchangeable, so you can pick either of them. In this example we will use `wireguard-router-a` on the `wireguard-a` charm and the `wireguard-route-b` relation interface on the `wireguard-b` charm to connect them together.
 
@@ -117,11 +117,11 @@ Machine  State    Address        Inst id        Base          AZ           Messa
 1        started  10.212.71.52   juju-fc22ca-1  ubuntu@24.04  workstation  Running
 ```
 
-It’s showing “blocked” for both WireGuard gateway charms. This is normal, and we’ll configure `advertise-prefixes` in the next step.
+The status is showing “blocked” for both WireGuard gateway charms. This is expected, and we’ll configure `advertise-prefixes` in the next step.
 
 ## Test the routing
 
-In this test scenario, we will create two test network regions, `192.0.2.0/24` and `198.51.100.0/24`, and the purpose of the WireGuard gateway charms is to connect these two network regions together. Let's assign `wireguard-a` to be on the `192.0.2.0/24` network side, and `wireguard-b` to be on the `198.51.100.0/24` network side. To achieve this, set the `advertise-prefixes` configuration on the WireGuard gateway charms. You can basically imagine this configuration as the networks this charm instance can reach.
+In this test scenario, we will create two test network regions, `192.0.2.0/24` and `198.51.100.0/24`, and the purpose of the WireGuard gateway charms is to connect these two network regions together. Let's assign `wireguard-a` to be on the `192.0.2.0/24` network side, and `wireguard-b` to be on the `198.51.100.0/24` network side. To achieve this, set the `advertise-prefixes` configuration on the WireGuard gateway charms. Imagine this configuration as the list of networks this charm instance can reach.
 
 ```
 juju config wireguard-a advertise-prefixes=192.0.2.0/24
