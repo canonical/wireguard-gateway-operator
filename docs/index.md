@@ -5,7 +5,9 @@ myst:
 ---
 
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
+
 # WireGuard gateway operator
+
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 A [Juju](https://juju.is/) [charm](https://documentation.ubuntu.com/juju/3.6/reference/charm/) deploying a highly available, high-performance site-to-site VPN based on WireGuard.

@@ -3,7 +3,9 @@
 # Integrations
 
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
-### WireGuard router integration
+
+## WireGuard router integration
+
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 _Interface_: `wireguard-router-a`

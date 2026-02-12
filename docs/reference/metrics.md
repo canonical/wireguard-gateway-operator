@@ -1,6 +1,6 @@
 (reference_metrics)=
 
-## Metrics
+# Metrics
 
 The [BIRD exporter](https://github.com/czerwonk/bird_exporter) inside the WireGuard gateway charm provides the following metrics:
 

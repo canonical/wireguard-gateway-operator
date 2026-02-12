@@ -25,7 +25,9 @@ juju integrate opentelemetry-collector:send-remote-write prometheus
 ```
 
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
+
 ## Integrate with Loki
+
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 You can integrate the OpenTelemetry collector charm with the [Loki K8s](https://charmhub.io/loki-k8s) charm with the `send-remote-write` relation of the OpenTelemetry collector charm using a cross-model relation. This relation will instruct the OpenTelemetry collector charm to send all logs on the machine to the remote Loki instance.

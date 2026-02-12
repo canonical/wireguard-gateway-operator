@@ -4,10 +4,12 @@ myst:
     "description lang=en": "The WireGuard gateway charm tutorial that walks a user through a basic WireGuard gateway deployment."
 ---
 
-<!-- vale Canonical.007-Headings-sentence-case = NO -->
 (tutorial_index)=
 
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
+
 # Deploy the WireGuard gateway charm for the first time
+
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 The `wireguard-gateway` charm helps you deploy a high-performance, highly available WireGuard site-to-site VPN. This tutorial will walk you through each step to create a basic WireGuard gateway deployment with two WireGuard gateway charms.
@@ -77,7 +79,9 @@ juju add-model wireguard-tutorial
 ```
 
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
+
 ## Deploy WireGuard gateway charms
+
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 Start off by deploying two WireGuard gateway charm. By default it will deploy the latest stable release of
