@@ -15,6 +15,7 @@ header:
   - '**/*.json'
   - '**/*.md'
   - '**/*.txt'
+  - '.readthedocs.yaml'
   - '.jujuignore'
   - '.gitignore'
   - '.licenserc.yaml'
