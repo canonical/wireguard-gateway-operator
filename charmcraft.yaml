@@ -45,6 +45,8 @@ parts:
 provides:
   wireguard-router-a:
     interface: wireguard_router
+  cos-agent:
+    interface: cos_agent
 
 requires:
   wireguard-router-b:
