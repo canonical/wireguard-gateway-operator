@@ -10,7 +10,7 @@ import subprocess  # nosec
 import textwrap
 
 import jinja2
-from charmlibs import apt, systemd
+from charmlibs import systemd
 
 import network
 import wgdb
@@ -74,18 +74,6 @@ def bird_reload(config: str) -> None:
     if _BIRD_CONF_FILE.read_text(encoding="utf-8") != config:
         _BIRD_CONF_FILE.write_text(config, encoding="utf-8")
         subprocess.check_call(["birdc", "configure"])  # nosec # noqa: S607
-
-
-def bird_apply_db(
-    db: wgdb.WireguardDb,
-    advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
-) -> None:
-    """Sync BIRD configuration with WireGuard database.
-
-    Args:
-        db: WireGuard database.
-        advertise_prefixes: List of prefixes to advertise.
-    """
     if (
         not _BIRD_EXPORTER_CONF_FILE.exists()
         or _BIRD_EXPORTER_CONF_FILE.read_text(encoding="utf-8") != 'ARGS="-bird.v2"'
@@ -102,6 +90,18 @@ def bird_apply_db(
             )
         )
         subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
+
+
+def bird_apply_db(
+    db: wgdb.WireguardDb,
+    advertise_prefixes: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
+) -> None:
+    """Sync BIRD configuration with WireGuard database.
+
+    Args:
+        db: WireGuard database.
+        advertise_prefixes: List of prefixes to advertise.
+    """
     config = bird_generate_config(
         router_id=network.get_router_id(),
         interfaces=db.list_link(),

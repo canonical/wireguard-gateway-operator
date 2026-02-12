@@ -84,8 +84,21 @@ def test_bird_reload_changed(monkeypatch, tmp_path):
     conf_file.write_text("old config", encoding="utf-8")
     monkeypatch.setattr(bird, "_BIRD_CONF_FILE", conf_file)
 
+    exporter_conf_file = tmp_path / "prometheus-bird-exporter"
+    exporter_conf_file.write_text('ARGS="-bird.v2"', encoding="utf-8")
+    monkeypatch.setattr(bird, "_BIRD_EXPORTER_CONF_FILE", exporter_conf_file)
+
+    sysctl_file = tmp_path / "99-wireguard-gateway.conf"
+    sysctl_file.write_text(
+        "net.ipv4.ip_forward = 1\nnet.ipv6.conf.all.forwarding = 1\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(bird, "_SYSCTL_FILE", sysctl_file)
+
     mock_check_call = unittest.mock.MagicMock()
     monkeypatch.setattr(bird.subprocess, "check_call", mock_check_call)
+
+    mock_service_restart = unittest.mock.MagicMock()
+    monkeypatch.setattr(bird.systemd, "service_restart", mock_service_restart)
 
     bird.bird_reload("new config")
 
@@ -104,8 +117,21 @@ def test_bird_reload_no_change(monkeypatch, tmp_path):
     conf_file.write_text("same config", encoding="utf-8")
     monkeypatch.setattr(bird, "_BIRD_CONF_FILE", conf_file)
 
+    exporter_conf_file = tmp_path / "prometheus-bird-exporter"
+    exporter_conf_file.write_text('ARGS="-bird.v2"', encoding="utf-8")
+    monkeypatch.setattr(bird, "_BIRD_EXPORTER_CONF_FILE", exporter_conf_file)
+
+    sysctl_file = tmp_path / "99-wireguard-gateway.conf"
+    sysctl_file.write_text(
+        "net.ipv4.ip_forward = 1\nnet.ipv6.conf.all.forwarding = 1\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(bird, "_SYSCTL_FILE", sysctl_file)
+
     mock_check_call = unittest.mock.MagicMock()
     monkeypatch.setattr(bird.subprocess, "check_call", mock_check_call)
+
+    mock_service_restart = unittest.mock.MagicMock()
+    monkeypatch.setattr(bird.systemd, "service_restart", mock_service_restart)
 
     bird.bird_reload("same config")
 
