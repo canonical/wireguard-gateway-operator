@@ -25,7 +25,7 @@ terraform {
 provider "juju" {}
 
 resource "juju_model" "test_model" {
-  name = "test-model"
+  name = "test-wireguard-${formatdate("YYYYMMDDhhmmss", timestamp())}"
 }
 
 module "wireguard" {
