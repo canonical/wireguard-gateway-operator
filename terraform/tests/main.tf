@@ -16,7 +16,7 @@ variable "revision" {
 terraform {
   required_providers {
     juju = {
-      version = "~> 0.20.0"
+      version = "> 1.1.0"
       source  = "juju/juju"
     }
   }
@@ -24,10 +24,14 @@ terraform {
 
 provider "juju" {}
 
-module "__charm_name__" {
-  source   = "./.."
-  app_name = "__charm_name__"
-  channel  = var.channel
-  model    = "prod-__charm_name__-example"
-  revision = var.revision
+resource "juju_model" "test_model" {
+  name = "test-model"
+}
+
+module "wireguard" {
+  source     = "./.."
+  app_name   = "wireguard"
+  channel    = var.channel
+  model_uuid = juju_model.test_model.uuid
+  revision   = var.revision
 }
