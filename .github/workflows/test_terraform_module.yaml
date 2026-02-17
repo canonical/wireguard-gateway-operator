@@ -5,6 +5,7 @@ name: Test Terraform Module
 on:
   workflow_dispatch:
   pull_request:
+    - 'terraform/**'
 
 permissions:
   contents: read
