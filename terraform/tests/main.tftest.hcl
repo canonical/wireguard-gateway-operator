@@ -3,13 +3,17 @@
 
 variables {
   channel = "latest/edge"
-  # renovate: depName="__charm_name__"
+  # renovate: depName="wireguard-gateway"
   revision = 1
 }
 
 run "basic_deploy" {
+  module {
+    source = "./tests"
+  }
+
   assert {
-    condition     = module.__charm_name__.app_name == "__charm_name__"
-    error_message = "__charm_name__ app_name did not match expected"
+    condition     = module.wireguard.app_name == "wireguard"
+    error_message = "wireguard app_name did not match expected"
   }
 }
