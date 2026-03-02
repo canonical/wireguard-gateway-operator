@@ -18,6 +18,7 @@ import wgdb
 _BIRD_CONF_TEMPLATE = pathlib.Path(__file__).parent.parent / "templates/bird.conf.j2"
 _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
 _BIRD_EXPORTER_CONF_FILE = pathlib.Path("/etc/default/prometheus-bird-exporter")
+_BIRD_EXPORTER_CONF_CONTENT = 'ARGS="-bird.v2"'
 _SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
@@ -76,9 +77,9 @@ def bird_reload(config: str) -> None:
         subprocess.check_call(["birdc", "configure"])  # nosec # noqa: S607
     if (
         not _BIRD_EXPORTER_CONF_FILE.exists()
-        or _BIRD_EXPORTER_CONF_FILE.read_text(encoding="utf-8") != 'ARGS="-bird.v2"'
+        or _BIRD_EXPORTER_CONF_FILE.read_text(encoding="utf-8") != _BIRD_EXPORTER_CONF_CONTENT
     ):
-        _BIRD_EXPORTER_CONF_FILE.write_text('ARGS="-bird.v2"', encoding="utf-8")
+        _BIRD_EXPORTER_CONF_FILE.write_text(_BIRD_EXPORTER_CONF_CONTENT, encoding="utf-8")
         systemd.service_restart("prometheus-bird-exporter")
     if not _SYSCTL_FILE.exists():
         _SYSCTL_FILE.write_text(
