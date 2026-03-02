@@ -18,7 +18,7 @@ import wgdb
 _BIRD_CONF_TEMPLATE = pathlib.Path(__file__).parent.parent / "templates/bird.conf.j2"
 _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
 _BIRD_EXPORTER_CONF_FILE = pathlib.Path("/etc/default/prometheus-bird-exporter")
-_BIRD_EXPORTER_CONF_CONTENT = 'ARGS="-bird.v2"'
+_BIRD_EXPORTER_CONF_CONTENT = 'ARGS="-bird.v2 -web.listen-address=127.0.0.1:9324"'
 _SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
