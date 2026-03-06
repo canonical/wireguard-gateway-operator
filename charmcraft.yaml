@@ -6,7 +6,7 @@ name: wireguard-gateway
 title: WireGuard gateway
 summary: WireGuard site-to-site VPN charm.
 links:
-  documentation: https://discourse.charmhub.io
+  documentation: https://documentation.ubuntu.com/wireguard-gateway-operator/latest/
   issues: https://github.com/canonical/wireguard-gateway-operator/issues
   source: https://github.com/canonical/wireguard-gateway-operator
   contact: https://launchpad.net/~canonical-is-devops
