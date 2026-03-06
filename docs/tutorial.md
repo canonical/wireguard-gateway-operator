@@ -37,9 +37,9 @@ This tutorial requires the following software to be installed on your working st
 (either locally or in the Multipass VM):
 
 - Juju 3
-- MicroK8s 1.33
+- LXD 5.21
 
-Use [Concierge](https://github.com/canonical/concierge) to set up Juju and MicroK8s:
+Use [Concierge](https://github.com/canonical/concierge) to set up Juju and LXD:
 
 ```
 sudo snap install --classic concierge
