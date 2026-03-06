@@ -13,6 +13,7 @@ The pages in this section contain technical information for topics relevant to t
 ```{toctree}
 :maxdepth: 1
 actions.md
+charm-architecture.md
 configurations.md
 metrics.md
 integrations.md

@@ -33,11 +33,11 @@ C4Context
 
 The following diagram shows the architecture of the WireGuard gateway charm:
 
-![WireGuard gateway charm architecture diagram](./wireguard-gateway-charm.png)
+![WireGuard gateway charm architecture diagram](wireguard-gateway-charm.png)
 
 ## Metrics
 
-The WireGuard gateway charm provides Prometheus metrics. The full list of metrics can be found [here](../reference/metrics.md).
+The WireGuard gateway charm provides Prometheus metrics. The full list of metrics can be found [here](metrics.md).
 
 ## Juju events
 
