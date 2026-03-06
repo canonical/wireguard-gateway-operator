@@ -1,6 +1,6 @@
 (how_to_integrate_with_cos)=
 
-# Integrate with COS
+# How to integrate with COS
 
 The WireGuard gateway charm provides metrics, logging, and Grafana dashboard integration with the COS solution. This integration is facilitated by the `cos-agent` relation interface with any charms compatible with the `cos-agent` relation interface, such as the [OpenTelemetry collector charm](https://charmhub.io/opentelemetry-collector).
 

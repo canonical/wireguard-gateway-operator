@@ -30,10 +30,10 @@ Example `wireguard-router-b` integrate command:
 juju integrate wireguard-gateway-b:wireguard-router-b wireguard-gateway-a:wireguard-router-a
 ```
 
-# COS agent integration
+## COS agent integration
 
 _Interface_: `cos-agent`
-_Supported charms_: [OpenTelemetry collector charm](https://charmhub.io/opentelemetry-collector), [Grafana agent charm](https://charmcraft.io/grafana-agent)
+_Supported charms_: [OpenTelemetry collector charm](https://charmhub.io/opentelemetry-collector), [Grafana agent charm](https://charmhub.io/grafana-agent)
 
 The WireGuard gateway charm uses the `cos-agent` relation to integrate with COS agent subordinate charms like the OpenTelemetry collector charm to provide COS integration, which provides you metrics, logs, and dashboards.
 

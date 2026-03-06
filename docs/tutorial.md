@@ -125,7 +125,7 @@ The status is showing “blocked” for both WireGuard gateway charms. This is e
 
 ## Test the routing
 
-In this test scenario, we will create two test network regions, `192.0.2.0/24` and `198.51.100.0/24`, and the purpose of the WireGuard gateway charms is to connect these two network regions together. Let's assign `wireguard-a` to be on the `192.0.2.0/24` network side, and `wireguard-b` to be on the `198.51.100.0/24` network side. To achieve this, set the `advertise-prefixes` configuration on the WireGuard gateway charms. Imagine this configuration as the list of networks this charm instance can reach.
+In this test scenario, we will create two test network regions, `192.0.2.0/24` and `198.51.100.0/24`, and the WireGuard gateway charms will connect these two network regions together. Let's assign `wireguard-a` to be on the `192.0.2.0/24` network side, and `wireguard-b` to be on the `198.51.100.0/24` network side. To achieve this, set the `advertise-prefixes` configuration on the WireGuard gateway charms. Imagine this configuration as the list of networks this charm instance can reach.
 
 ```
 juju config wireguard-a advertise-prefixes=192.0.2.0/24

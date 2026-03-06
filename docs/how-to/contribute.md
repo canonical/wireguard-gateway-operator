@@ -3,9 +3,7 @@
 # How to contribute
 
 Our documentation is hosted on the ReadTheDocs to enable collaboration.
-Please use the "Help us improve this documentation" links on each documentation page to either
-directly change something you see that's wrong, ask a question, or make a suggestion about a potential
-change using the comments section.
+Please click on the “Contribute to this page” icon at the top of each page to propose changes. This button will bring you directly to the source on GitHub. Similarly, you may click on “Give feedback” to provide suggestions or feedback about any page in the documentation.
 
 Our documentation is also available alongside the [source code on GitHub](https://github.com/canonical/wireguard-gateway-operator).
 You may open a pull request with your documentation changes, or you can

@@ -12,8 +12,8 @@ The following guides cover key processes and common tasks for managing and using
 
 ```{toctree}
 :maxdepth: 1
-back-up-restore.md
-contribute.md
-integrate-with-cos.md
-upgrade.md
+Integrate with COS <integrate-with-cos.md>
+Back up and restore <back-up-restore.md>
+Upgrade <upgrade.md>
+Contribute <contribute.md>
 ```
