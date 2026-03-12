@@ -43,7 +43,7 @@ Use [Concierge](https://github.com/canonical/concierge) to set up Juju and LXD:
 
 ```
 sudo snap install --classic concierge
-sudo concierge prepare -p lxd
+sudo concierge prepare -p machine
 ```
 
 This first command installs Concierge, and the second command uses Concierge to install
@@ -84,13 +84,9 @@ juju add-model wireguard-tutorial
 
 <!-- vale Canonical.007-Headings-sentence-case = YES -->
 
-Start off by deploying two WireGuard gateway charm. By default it will deploy the latest stable release of
+Start off by deploying two WireGuard gateway charm. Since the charm is under active development, we will deploy the latest edge release of
 the `wireguard-gateway` charm.
 
-```
-juju deploy wireguard-gateway wireguard-a
-juju deploy wireguard-gateway wireguard-b
-```
 
 ## Peer between two WireGuard gateway charms 
 
@@ -113,8 +109,8 @@ wireguard-a           blocked      1  wireguard-gateway             0  no       
 wireguard-b           blocked      1  wireguard-gateway             1  no       no advertise-prefixes configured
 
 Unit            Workload  Agent      Machine  Public address  Ports            Message
-wireguard-a/0*  active    idle       0        10.212.71.231   50001,50003/udp  advertising prefixes: 192.0.2.0/24
-wireguard-b/0*  active    idle       1        10.212.71.52    50000,50002/udp  advertising prefixes: 198.51.100.0/24
+wireguard-a/0*  blocked    idle       0        10.212.71.231   50001,50003/udp  no advertise-prefixes configured
+wireguard-b/0*  blocked    idle       1        10.212.71.52    50000,50002/udp  no advertise-prefixes configured
 
 Machine  State    Address        Inst id        Base          AZ           Message
 0        started  10.212.71.231  juju-fc22ca-0  ubuntu@24.04  workstation  Running

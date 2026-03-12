@@ -17,7 +17,7 @@ Like any Juju charm, this charm supports one-line deployment, configuration, int
 * Automatic route management and fault tolerance using OSPF on BIRD
 * Virtual redundant routing using VRRP on Keepalived
 
-For information about how to deploy, integrate, and manage this charm, see the official [WireGuard gateway documentation](./docs).
+For information about how to deploy, integrate, and manage this charm, see the official [WireGuard gateway documentation](https://documentation.ubuntu.com/wireguard-gateway-operator/latest/).
 
 ## Get started
 
