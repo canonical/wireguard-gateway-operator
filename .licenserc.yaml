@@ -15,6 +15,7 @@ header:
   - '**/*.json'
   - '**/*.md'
   - '**/*.txt'
+  - '.readthedocs.yaml'
   - '.jujuignore'
   - '.gitignore'
   - '.licenserc.yaml'
@@ -25,5 +26,6 @@ header:
   - 'zap_rules.tsv'
   - '**/*.md.j2'
   - 'templates/**'
+  - 'docs/**'
   - 'uv.lock'
   comment: on-failure
