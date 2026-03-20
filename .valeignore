@@ -1,0 +1,9 @@
+docs/_templates/*
+docs/_static/*
+docs/.sphinx/*
+docs/Makefile
+docs/conf.py
+docs/requirements.txt
+docs/.custom_wordlist.txt
+docs/.gitignore
+docs/reference/wireguard-gateway-charm.png
