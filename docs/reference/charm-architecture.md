@@ -1,4 +1,4 @@
-(explanation_charm_architecture)=
+(reference_charm_architecture)=
 
 # Charm architecture
 
