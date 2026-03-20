@@ -6,7 +6,11 @@ domain: architecture
 replaced-by: 
 ---
 
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
+
 # Integrated keepalived
+
+<!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 ## Context
 
@@ -26,7 +30,7 @@ present on each unit. This requires a dynamic and complex configuration
 of the keepalived instance. If this needed to be delegated to another
 charm, it would require implementing a new charm relation to convey the
 configuration and updating the keepalived charm or hacluster charm to
-support the new relation, which is too much work for this ad hoc task.
+support the new relation, which is too much work for this temporary task.
 
 ## Alternatives considered
 

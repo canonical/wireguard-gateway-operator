@@ -4,7 +4,11 @@
 
 The WireGuard gateway charm provides metrics, logging, and Grafana dashboard integration with the COS solution. This integration is facilitated by the `cos-agent` relation interface with any charms compatible with the `cos-agent` relation interface, such as the [OpenTelemetry collector charm](https://charmhub.io/opentelemetry-collector).
 
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
+
 ## Integrate with OpenTelemetry
+
+<!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 The OpenTelemetry collector charm is the entry point for all COS integrations. The OpenTelemetry collector charm installs the OpenTelemetry Collector on the WireGuard gateway charm machine and scrapes metrics, forwards logs, and transmits the Grafana dashboard to upstream metrics and logging charms like Prometheus and Loki, as well as to Grafana dashboard charms.
 

@@ -6,12 +6,16 @@ domain: architecture
 replaced-by: 
 ---
 
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
+
 # Use BIRD as the OSPF implementation
+
+<!-- vale Canonical.007-Headings-sentence-case = YES -->
 
 ## Context
 
 Currently, there are multiple implementations of OSPF in the Linux
-landscape, including FRRouting and BIRD. Practically, they don't have
+ecosystem, including FRRouting and BIRD. Practically, they don't have
 significant advantages over each other. FRR is in the Ubuntu main
 archive, thus better maintained by the Ubuntu team. BIRD supports
 RFC5838 address families in OSPFv3, allowing it to advertise IPv4 and
