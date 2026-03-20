@@ -87,7 +87,6 @@ juju add-model wireguard-tutorial
 Start off by deploying two WireGuard gateway charm. Since the charm is under active development, we will deploy the latest edge release of
 the `wireguard-gateway` charm.
 
-
 ## Peer between two WireGuard gateway charms 
 
 Now we need to integrate the two WireGuard gateway charms using the `wireguard-route-a` and `wireguard-router-b` relation {ref}`interface <juju:relation>` so they will establish WireGuard tunnels and forward network packets between them. `wireguard-route-a` and `wireguard-router-b` are interchangeable, so you can pick either of them. In this example we will use `wireguard-router-a` on the `wireguard-a` charm and the `wireguard-route-b` relation interface on the `wireguard-b` charm to connect them together.
