@@ -1,0 +1,16 @@
+groups:
+  - name: keepalived
+    rules:
+      - alert: Keepalived master transition
+        expr: |
+          sum by (instance) (
+            count_over_time(
+              {filename="/var/log/syslog"} |= "Entering MASTER STATE"
+            [2m])
+          ) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "keepalived became master"
+          description: "{{ $labels.juju_charm }} in {{ $labels.juju_model }} VRRP instances entered master state."
