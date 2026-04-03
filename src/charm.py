@@ -12,6 +12,7 @@ import typing
 
 import ops
 from charmlibs import apt
+from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 
 import bird
 import keepalived
@@ -70,6 +71,13 @@ class Charm(ops.CharmBase):
             args: Arguments passed to the CharmBase parent constructor.
         """
         super().__init__(*args)
+        self._grafana_agent = COSAgentProvider(
+            self,
+            metrics_endpoints=[
+                {"path": "/metrics", "port": 9324},
+            ],
+            dashboard_dirs=["./src/grafana_dashboards"],
+        )
         self._wgdb = self._create_wgdb()
         self.framework.observe(self.on.config_changed, self.reconcile)
         self.framework.observe(self.on.upgrade_charm, self.reconcile)
