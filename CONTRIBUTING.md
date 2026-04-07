@@ -1,8 +1,6 @@
-<!-- Remember to update this file for your charm -- replace __charm_name__ with the appropriate name. -->
-
 # Contributing
 
-This document explains the processes and practices recommended for contributing enhancements to the __charm_name__ charm.
+This document explains the processes and practices recommended for contributing enhancements to the WireGuard gateway charm.
 
 ## Overview
 
@@ -52,36 +50,6 @@ also, reference the issue or bug number when you submit the changes.
 
 Your changes will be reviewed in due time; if approved, they will be eventually merged.
 
-### Describing pull requests
-
-To be properly considered, reviewed and merged,
-your pull request must provide the following details:
-
-- **Title**: Summarize the change in a short, descriptive title.
-
-- **Overview**: Describe the problem that your pull request solves.
-  Mention any new features, bug fixes or refactoring.
-
-- **Rationale**: Explain why the change is needed.
-
-- **Juju Events Changes**: Describe any changes made to Juju events, or
-  "None" if the pull request does not change any Juju events.
-
-- **Module Changes**: Describe any changes made to the module, or "None"
-  if your pull request does not change the module.
-
-- **Library Changes**: Describe any changes made to the library,
-  or "None" is the library is not affected.
-
-- **Checklist**: Complete the following items:
-
-  - The [charm style guide](https://documentation.ubuntu.com/juju/3.6/reference/charm/charm-development-best-practices/) was applied
-  - The [contributing guide](https://github.com/canonical/is-charms-contributing-guide) was applied
-  - The changes are compliant with [ISD054 - Managing Charm Complexity](https://discourse.charmhub.io/t/specification-isd014-managing-charm-complexity/11619)
-  - The documentation is updated
-  - The PR is tagged with appropriate label (trivial, senior-review-required)
-  - The changelog has been updated
-
 ### Signing commits
 
 To improve contribution tracking,
@@ -90,7 +58,7 @@ we use the [Canonical contributor license agreement](https://assets.ubuntu.com/v
 
 #### Canonical contributor agreement
 
-Canonical welcomes contributions to the __charm_name__ charm. Please check out our
+Canonical welcomes contributions to the WireGuard Gateway charm. Please check out our
 [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
 
 The CLA sign-off is simple line at the
@@ -106,22 +74,35 @@ To add signatures on your commits, follow the
 ## Develop
 
 To make contributions to this charm, you'll need a working
-[development setup](https://documentation.ubuntu.com/juju/latest/user/howto/manage-your-deployment/manage-your-deployment-environment/).
+[development setup](https://documentation.ubuntu.com/juju/latest/howto/manage-your-juju-deployment/set-up-your-juju-deployment-local-testing-and-development/).
 
 The code for this charm can be downloaded as follows:
 
 ```
-git clone https://github.com/canonical/__charm_name__
+git clone https://github.com/canonical/wireguard-gateway-operator
 ```
 
-You can create an environment for development with `python3-venv`.
-We will also install `tox` inside the virtual environment for testing:
+Make sure to install [`uv`](https://docs.astral.sh/uv/). For example, you can install `uv` on Ubuntu using:
 
 ```bash
-sudo apt install python3-venv
-python3 -m venv venv
-source venv/bin/activate
-pip install tox
+sudo snap install astral-uv --classic
+```
+
+For other systems, follow the [`uv` installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+
+Then install `tox` with its extensions, and install a range of Python versions:
+
+```bash
+uv python install
+uv tool install tox --with tox-uv
+uv tool update-shell
+```
+
+To create a development environment, run:
+
+```bash
+uv sync --all-groups
+source .venv/bin/activate
 ```
 
 ### Test
@@ -130,32 +111,13 @@ This project uses `tox` for managing test environments. There are some pre-confi
 that can be used for linting and formatting code when you're preparing contributions to the charm:
 
 * ``tox``: Executes all of the basic checks and tests (``lint``, ``unit``, ``static``, and ``coverage-report``).
-* ``tox -e fmt``: Runs formatting using ``black`` and ``isort``.
+* ``tox -e fmt``: Runs formatting using ``ruff``.
 * ``tox -e lint``: Runs a range of static code analysis to check the code.
 * ``tox -e static``: Runs other checks such as ``bandit`` for security issues.
 * ``tox -e unit``: Runs the unit tests.
 * ``tox -e integration``: Runs the integration tests.
 
-### Build the rock and charm
-
-Use [Rockcraft](https://documentation.ubuntu.com/rockcraft/stable/) to create an
-OCI image for the __charm_name__ app, and then upload the image to a MicroK8s registry,
-which stores OCI archives so they can be downloaded and deployed.
-
-Enable the MicroK8s registry:
-
-```bash
-microk8s enable registry
-```
-
-The following commands pack the OCI image and push it into
-the MicroK8s registry:
-
-```bash
-cd <project_dir>
-rockcraft pack
-skopeo --insecure-policy copy --dest-tls-verify=false oci-archive:<rock-name>.rock docker://localhost:32000/<app-name>:latest
-```
+### Build the charm
 
 Build the charm in this git repository using:
 
@@ -171,7 +133,5 @@ juju add-model charm-dev
 # Enable DEBUG logging
 juju model-config logging-config="<root>=INFO;unit=DEBUG"
 # Deploy the charm
-juju deploy ./__charm_name__.charm 
+juju deploy ./wireguard-gateway_amd64.charm
 ```
-
-
