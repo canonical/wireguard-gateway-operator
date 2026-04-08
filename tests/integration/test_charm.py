@@ -107,3 +107,19 @@ def test_routing(juju: jubilant.Juju):
 
     juju.exec("ping 198.51.100.2 -I 192.0.2.2 -c 1", unit=test_a_unit)
     juju.exec("ping 192.0.2.2 -I 198.51.100.2 -c 1", unit=test_b_unit)
+
+
+def test_keepalived_interface(juju: jubilant.Juju):
+    """
+    arrange: get the wireguard-a units that have VIPs configured from the previous test.
+    act: read the keepalived configuration and determine the expected network interface.
+    assert: verify that keepalived used network interface.
+    """
+    status = juju.status()
+
+    for unit in status.get_units("wireguard-a"):
+        keepalived_config = juju.exec(
+            "cat /etc/keepalived/keepalived.conf", unit=unit
+        ).stdout
+
+        assert "eth0" in keepalived_config
