@@ -49,7 +49,7 @@ def _keepalived_render_config(
         .from_string(template)
         .render(
             router_id=network.get_router_id(),
-            interface=network.get_network_interface(),
+            interface=network.get_network_interface(vips),
             vips=vips,
             check_routes=check_routes,
             check_route_script=_CHECK_ROUTER_SCRIPT.absolute(),
