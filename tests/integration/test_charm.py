@@ -118,8 +118,6 @@ def test_keepalived_interface(juju: jubilant.Juju):
     status = juju.status()
 
     for unit in status.get_units("wireguard-a"):
-        keepalived_config = juju.exec(
-            "cat /etc/keepalived/keepalived.conf", unit=unit
-        ).stdout
+        keepalived_config = juju.exec("cat /etc/keepalived/keepalived.conf", unit=unit).stdout
 
         assert "eth0" in keepalived_config
