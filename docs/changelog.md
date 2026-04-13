@@ -1,5 +1,11 @@
 (changelog)=
 
+## 2026-04-13
+
+### Changed
+
+- Select VRRP network interface based on VIPs configuration instead of using the default network interface.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
