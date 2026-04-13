@@ -15,6 +15,7 @@ from charmlibs import apt
 
 import bird
 import keepalived
+import network
 import relations
 import wgdb
 import wireguard
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 WGDB_DIR = pathlib.Path("/opt/wireguard-gateway/")
 WIREGUARD_ROUTER_PROVIDER_RELATION = "wireguard-router-a"
 WIREGUARD_ROUTER_REQUIRER_RELATION = "wireguard-router-b"
+GATEWAY_PEERS_RELATION = "gateway-peers"
 
 
 class InvalidRelationDataError(Exception):
@@ -75,6 +77,7 @@ class Charm(ops.CharmBase):
         self.framework.observe(self.on.upgrade_charm, self.reconcile)
         self.framework.observe(self.on.update_status, self.reconcile)
         for relation in [
+            GATEWAY_PEERS_RELATION,
             WIREGUARD_ROUTER_PROVIDER_RELATION,
             WIREGUARD_ROUTER_REQUIRER_RELATION,
         ]:
@@ -226,6 +229,7 @@ class Charm(ops.CharmBase):
         self._relation_add_links(data)
         self._relation_update_links(data)
         self._relation_sync(data)
+        self._relation_update_mtu(data)
         return data
 
     def _relation_add_keys(self, relation: relations.WireguardRouterRelation) -> None:
@@ -433,6 +437,42 @@ class Charm(ops.CharmBase):
                 for link in self._wgdb.list_link(relation.id)
             ]
         )
+
+    def _relation_update_mtu(self, relation: relations.WireguardRouterRelation) -> None:
+        """Update MTU for a relation based on the MTU to all remote endpoints.
+
+        The MTU is set to the minimum of:
+          - The MTU to each remote endpoint address (minus 80 bytes for WireGuard overhead).
+          - The MTU values published by peer units in the peer relation databag.
+
+        If no MTU values can be determined, the MTU is set to None.
+
+        Args:
+            relation: The WireGuard router relation.
+        """
+        mtus: list[int] = []
+        for unit in relation.remote_data:
+            mtus.append(network.get_mtu(ipaddress.ip_address(unit.ingress_address)) - 80)
+        real_mtu = min(mtus) if mtus else None
+        peer_relation = self.model.get_relation(GATEWAY_PEERS_RELATION)
+        if peer_relation:
+            for unit in peer_relation.units:
+                peer_mtu = peer_relation.data[unit].get("mtu")
+                if peer_mtu is not None:
+                    mtus.append(int(peer_mtu))
+        relation.set_mtu(real_mtu)
+        if peer_relation:
+            if real_mtu is not None:
+                peer_relation.data[self.unit]["mtu"] = str(real_mtu)
+            else:
+                peer_relation.data[self.unit].pop("mtu", None)
+        mtu = min(mtus) if mtus else None
+        for link in self._wgdb.list_link(relation.id, include_half_closed=True):
+            self._wgdb.set_link_mtu(
+                public_key=link.public_key,
+                peer_public_key=link.peer_public_key,
+                mtu=mtu,
+            )
 
     def _relation_removed(self, relation_id: int) -> None:
         """Cleanup on relation broken."""

@@ -52,6 +52,13 @@ class WireguardRouterRelationData(pydantic.BaseModel):
     )
     public_keys: list[str] = pydantic.Field(default_factory=list)
     listen_ports: list[WireguardRouterListenPort] = pydantic.Field(default_factory=list)
+    mtu: int | None = None
+
+    @pydantic.field_validator("ingress_address")
+    @classmethod
+    def _validate_ingress_address(cls, v: str) -> str:
+        ipaddress.ip_address(v)
+        return v
 
     @pydantic.field_serializer("advertise_prefixes")
     def _serialize_advertise_prefixes(
@@ -104,6 +111,19 @@ class WireguardRouterRelationData(pydantic.BaseModel):
                 )
             )
         return ports
+
+    @pydantic.field_serializer("mtu")
+    def _serialize_mtu(self, value: int | None) -> str | None:
+        if value is None:
+            return None
+        return str(value)
+
+    @pydantic.field_validator("mtu", mode="before")
+    @classmethod
+    def _validate_mtu(cls, v: str | int | None) -> int | None:
+        if v is None:
+            return None
+        return int(v)
 
     @pydantic.model_validator(mode="after")
     def _validate_model(self) -> "WireguardRouterRelationData":
@@ -223,7 +243,9 @@ class WireguardRouterRelation:
     def _save(self) -> None:
         """Save the relation data back to the relation."""
         self._relation.data[self._unit].update(
-            self._data.model_dump(exclude={"ingress_address", "ingress-address"}, by_alias=True)
+            self._data.model_dump(
+                exclude={"ingress_address", "ingress-address"}, by_alias=True, exclude_none=True
+            )
         )
 
     def set_advertise_prefixes(
@@ -254,3 +276,14 @@ class WireguardRouterRelation:
         """
         self._data = self._data.model_copy(update={"listen_ports": listen_ports})
         self._save()
+
+    def set_mtu(self, mtu: int | None) -> None:
+        """Set the MTU in the relation data.
+
+        Args:
+            mtu: The MTU value, or None to clear it.
+        """
+        self._data = self._data.model_copy(update={"mtu": mtu})
+        self._save()
+        if mtu is None:
+            self._relation.data[self._unit].pop("mtu", None)
