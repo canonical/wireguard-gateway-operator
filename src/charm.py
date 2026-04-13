@@ -444,6 +444,7 @@ class Charm(ops.CharmBase):
         The MTU is set to the minimum of:
           - The MTU to each remote endpoint address (minus 80 bytes for WireGuard overhead).
           - The MTU values published by peer units in the peer relation databag.
+          - The MTU values published by remote units in the router relation databag.
 
         If no MTU values can be determined, the MTU is set to None.
 
@@ -460,6 +461,9 @@ class Charm(ops.CharmBase):
                 peer_mtu = peer_relation.data[unit].get("mtu")
                 if peer_mtu is not None:
                     mtus.append(int(peer_mtu))
+        for unit in relation.remote_data:
+            if unit.mtu is not None:
+                mtus.append(unit.mtu)
         relation.set_mtu(real_mtu)
         if peer_relation:
             if real_mtu is not None:

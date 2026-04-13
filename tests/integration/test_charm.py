@@ -107,3 +107,37 @@ def test_routing(juju: jubilant.Juju):
 
     juju.exec("ping 198.51.100.2 -I 192.0.2.2 -c 1", unit=test_a_unit)
     juju.exec("ping 192.0.2.2 -I 198.51.100.2 -c 1", unit=test_b_unit)
+
+
+def test_mtu(juju: jubilant.Juju):
+    """
+    arrange: set different MTUs on eth0 of one unit from each application.
+    act: trigger reconfiguration and wait for active status.
+    assert: verify wireguard interfaces on all units have the same MTU.
+    """
+    status = juju.status()
+    wireguard_a_units = sorted(status.get_units("wireguard-a"))
+    wireguard_b_units = sorted(status.get_units("wireguard-b"))
+
+    juju.exec("sudo ip link set eth0 mtu 1400", unit=wireguard_a_units[0])
+    juju.exec("sudo ip link set eth0 mtu 1360", unit=wireguard_b_units[0])
+
+    juju.config("wireguard-a", {"vips": "203.0.113.2/24 "})
+    juju.wait(jubilant.all_active)
+    juju.config("wireguard-a", {"vips": "203.0.113.2/24"})
+    juju.wait(jubilant.all_active)
+
+    all_mtus = set()
+    for unit in wireguard_a_units + wireguard_b_units:
+        wg_interfaces_output = juju.exec("wg show interfaces", unit=unit).stdout.strip()
+        assert wg_interfaces_output
+        wg_interfaces = wg_interfaces_output.split()
+        for iface in wg_interfaces:
+            link_info = json.loads(
+                juju.exec(f"ip -j link show {iface}", unit=unit).stdout
+            )
+            iface_mtu = link_info[0]["mtu"]
+            logger.info(f"unit {unit} WireGuard interface {iface} mtu={iface_mtu}")
+            all_mtus.add(iface_mtu)
+
+    assert all_mtus == {1280}
