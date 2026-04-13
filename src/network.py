@@ -42,11 +42,13 @@ def get_network_interface(ips: list[ipaddress.IPv4Interface | ipaddress.IPv6Inte
         Network interface name.
     """
     names: collections.Counter[str] = collections.Counter()
-    interfaces: list[str] = [n for n in map(_get_network_interface, ips) if n]
+    interfaces: list[str] = [name for name in map(_get_network_interface, ips) if name]
     names.update(interfaces)
-    if not names:
-        name = _get_network_interface(ipaddress.IPv4Interface("1.2.3.4/32"))
-        if not name:
-            raise RuntimeError("unable to get network interface")
-        return name
-    return names.most_common(1)[0][0]
+    name = (
+        names.most_common(1)[0][0]
+        if names
+        else _get_network_interface(ipaddress.IPv4Interface("1.2.3.4/32"))
+    )
+    if not name:
+        raise RuntimeError("unable to get network interface")
+    return name

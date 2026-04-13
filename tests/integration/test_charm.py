@@ -111,10 +111,13 @@ def test_routing(juju: jubilant.Juju):
 
 def test_keepalived_interface(juju: jubilant.Juju):
     """
-    arrange: get the wireguard-a units that have VIPs configured from the previous test.
+    arrange: set the wireguard-a VIPs configuration.
     act: read the keepalived configuration and determine the expected network interface.
     assert: verify that keepalived used network interface.
     """
+    juju.config("wireguard-a", {"vips": "203.0.113.2/24"})
+    juju.wait(jubilant.all_active)
+
     status = juju.status()
 
     for unit in status.get_units("wireguard-a"):
