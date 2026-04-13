@@ -1,5 +1,7 @@
 global_defs {
   router_id {{ router_id }}
+  enable_script_security
+  script_user root
 }
 
 {% for route in check_routes %}
