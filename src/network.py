@@ -20,7 +20,7 @@ def get_router_id() -> str:
 
 
 def _get_network_interface(ip: ipaddress.IPv4Interface | ipaddress.IPv6Interface) -> str | None:
-    """Get network interface associated with the give IP.
+    """Get network interface associated with the given IP.
 
     Return:
         Network interface name, or None if no route was found.
