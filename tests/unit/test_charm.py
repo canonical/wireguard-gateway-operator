@@ -528,6 +528,8 @@ def test_charm_configure_bird_wireguard_keepalived(
             """\
             global_defs {
               router_id 172.16.0.0
+              enable_script_security
+              script_user root
             }
 
             vrrp_script check_route_0 {
