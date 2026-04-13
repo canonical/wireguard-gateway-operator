@@ -6,6 +6,7 @@
 import collections
 import configparser
 import io
+import json
 import pathlib
 import shutil
 import subprocess  # nosec
@@ -70,6 +71,8 @@ def _wg_config(interface: wgdb.WireguardLink, is_provider: bool, quick: bool) ->
             "169.254.0.1/24, fe80::1/64" if is_provider else "169.254.0.2/24, fe80::2/64"
         )
         interface_config["Table"] = "off"
+        if interface.mtu is not None:
+            interface_config["MTU"] = interface.mtu
     config = configparser.ConfigParser()
     config.optionxform = str  # type: ignore
     config["Interface"] = interface_config
@@ -96,6 +99,11 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
     # Derive the public key from the private key instead ,the public key is deterministically
     # derived.
     public_key = generate_public_key(private_key)
+    link_out = subprocess.check_output(  # nosec
+        ["ip", "-j", "link", "show", name],
+        encoding="utf-8",  # noqa: S607
+    )
+    mtu = json.loads(link_out)[0]["mtu"]
     return wgdb.WireguardLink.model_validate(
         {
             "owner": 0,
@@ -106,6 +114,7 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
             "peer_public_key": config.get("Peer", "PublicKey"),
             "peer_endpoint": config.get("Peer", "Endpoint"),
             "peer_allowed_ips": config.get("Peer", "AllowedIPs").split(","),
+            "mtu": mtu,
         }
     )
 
@@ -130,6 +139,7 @@ def _wg_config_equal(left: wgdb.WireguardLink, right: wgdb.WireguardLink) -> boo
         and left.peer_public_key == right.peer_public_key
         and left.peer_endpoint == right.peer_endpoint
         and left.peer_allowed_ips == right.peer_allowed_ips
+        and (left.mtu == right.mtu or left.mtu is None or right.mtu is None)
     )
 
 
@@ -197,6 +207,10 @@ def wireguard_syncconf(interface: wgdb.WireguardLink, is_provider: bool) -> None
         ["wg", "syncconf", interface.interface_name, "/dev/stdin"],  # nosec # noqa: S607
         input=_wg_config(interface, is_provider=is_provider, quick=False).encode("ascii"),
     )
+    if interface.mtu is not None:
+        subprocess.check_output(
+            ["ip", "link", "set", interface.interface_name, "mtu", str(interface.mtu)]  # nosec # noqa: S607
+        )
     wg_quick_config = _WG_QUICK_CONFIG_DIR / f"{interface.interface_name}.conf"
     wg_quick_config.touch(mode=0o600)
     wg_quick_config.write_text(_wg_config(interface, is_provider=is_provider, quick=True))
