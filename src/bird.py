@@ -10,31 +10,26 @@ import subprocess  # nosec
 import textwrap
 
 import jinja2
+from charmlibs import systemd
 
 import network
 import wgdb
 
 _BIRD_CONF_TEMPLATE = pathlib.Path(__file__).parent.parent / "templates/bird.conf.j2"
 _BIRD_CONF_FILE = pathlib.Path("/etc/bird/bird.conf")
+_BIRD_EXPORTER_CONF_FILE = pathlib.Path("/etc/default/prometheus-bird-exporter")
+_BIRD_EXPORTER_CONF_CONTENT = 'ARGS="-bird.v2 -web.listen-address=127.0.0.1:9324"'
 _SYSCTL_FILE = pathlib.Path("/etc/sysctl.d/99-wireguard-gateway.conf")
 
 
 def bird_to_install() -> list[str]:
-    """BIRD apt packages need to be installed."""
-    if not _SYSCTL_FILE.exists():
-        _SYSCTL_FILE.touch()
-        _SYSCTL_FILE.write_text(
-            textwrap.dedent(
-                """\
-                net.ipv4.ip_forward = 1
-                net.ipv6.conf.all.forwarding = 1
-                """
-            )
-        )
-        subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
+    """Apt packages to install for BIRD."""
+    packages = []
     if not shutil.which("birdc"):
-        return ["bird2"]
-    return []
+        packages.append("bird2")
+    if not shutil.which("prometheus-bird-exporter"):
+        packages.append("prometheus-bird-exporter")
+    return packages
 
 
 def bird_generate_config(
@@ -80,6 +75,22 @@ def bird_reload(config: str) -> None:
     if _BIRD_CONF_FILE.read_text(encoding="utf-8") != config:
         _BIRD_CONF_FILE.write_text(config, encoding="utf-8")
         subprocess.check_call(["birdc", "configure"])  # nosec # noqa: S607
+    if (
+        not _BIRD_EXPORTER_CONF_FILE.exists()
+        or _BIRD_EXPORTER_CONF_FILE.read_text(encoding="utf-8") != _BIRD_EXPORTER_CONF_CONTENT
+    ):
+        _BIRD_EXPORTER_CONF_FILE.write_text(_BIRD_EXPORTER_CONF_CONTENT, encoding="utf-8")
+        systemd.service_restart("prometheus-bird-exporter")
+    if not _SYSCTL_FILE.exists():
+        _SYSCTL_FILE.write_text(
+            textwrap.dedent(
+                """\
+                net.ipv4.ip_forward = 1
+                net.ipv6.conf.all.forwarding = 1
+                """
+            )
+        )
+        subprocess.check_call(["sysctl", "--system"])  # nosec # noqa: S607
 
 
 def bird_apply_db(
