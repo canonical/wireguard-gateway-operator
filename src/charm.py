@@ -451,11 +451,19 @@ class Charm(ops.CharmBase):
         Args:
             relation: The WireGuard router relation.
         """
-        mtus: list[int] = []
+        real_mtu = None
         for unit in relation.remote_data:
-            mtus.append(network.get_mtu(ipaddress.ip_address(unit.ingress_address)) - 80)
-        real_mtu = min(mtus) if mtus else None
+            network_mtu = network.get_mtu(ipaddress.ip_address(unit.ingress_address)) - 80
+            real_mtu = network_mtu if real_mtu is None or real_mtu > network_mtu else real_mtu
+        relation.set_mtu(real_mtu)
         peer_relation = self.model.get_relation(GATEWAY_PEERS_RELATION)
+        if peer_relation:
+            if real_mtu is not None:
+                peer_relation.data[self.unit]["mtu"] = str(real_mtu)
+            else:
+                peer_relation.data[self.unit].pop("mtu", None)
+
+        mtus: list[int] = [real_mtu] if real_mtu else []
         if peer_relation:
             for unit in peer_relation.units:
                 peer_mtu = peer_relation.data[unit].get("mtu")
@@ -464,12 +472,6 @@ class Charm(ops.CharmBase):
         for unit in relation.remote_data:
             if unit.mtu is not None:
                 mtus.append(unit.mtu)
-        relation.set_mtu(real_mtu)
-        if peer_relation:
-            if real_mtu is not None:
-                peer_relation.data[self.unit]["mtu"] = str(real_mtu)
-            else:
-                peer_relation.data[self.unit].pop("mtu", None)
         mtu = min(mtus) if mtus else None
         for link in self._wgdb.list_link(relation.id, include_half_closed=True):
             self._wgdb.set_link_mtu(
