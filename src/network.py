@@ -47,6 +47,7 @@ def get_network_interface(ips: list[ipaddress.IPv4Interface | ipaddress.IPv6Inte
     name = (
         names.most_common(1)[0][0]
         if names
+        # fallback to the default route if none are found for VIPs
         else _get_network_interface(ipaddress.IPv4Interface("1.2.3.4/32"))
     )
     if not name:
