@@ -49,9 +49,20 @@ def get_router_id() -> str:
 def _get_network_interface(ip: ipaddress.IPv4Interface | ipaddress.IPv6Interface) -> str | None:
     """Get network interface associated with the given IP.
 
+    First checks if any interface on the host has an exact matching address.
+    If not, falls back to route-based lookup.
+
     Return:
-        Network interface name, or None if no route was found.
+        Network interface name, or None if no match or route was found.
     """
+    addr_out = subprocess.check_output(
+        ["ip", f"-{ip.version}", "-j", "addr", "show"],  # nosec # noqa: S607
+        encoding="utf-8",
+    )
+    for interface in json.loads(addr_out):
+        for addr_info in interface.get("addr_info", []):
+            if addr_info.get("local") == str(ip.ip):
+                return interface["ifname"]
     try:
         out = subprocess.check_output(
             ["ip", f"-{ip.version}", "-j", "route", "get", str(ip.ip)],  # nosec # noqa: S607
