@@ -29,5 +29,5 @@ header:
   - 'docs/**'
   - 'uv.lock'
   - 'src/grafana_dashboards/**'
-  - 'src/grafana_dashboards/**'
+  - 'src/loki_alert_rules/**'
   comment: on-failure
