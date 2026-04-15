@@ -123,7 +123,10 @@ class WireguardRouterRelationData(pydantic.BaseModel):
     def _validate_mtu(cls, v: str | int | None) -> int | None:
         if v is None:
             return None
-        return int(v)
+        mtu = int(v)
+        if not (68 <= mtu <= 65535):
+            raise ValueError("MTU must be between 68 and 65535")
+        return mtu
 
     @pydantic.model_validator(mode="after")
     def _validate_model(self) -> "WireguardRouterRelationData":
