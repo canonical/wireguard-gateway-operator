@@ -28,4 +28,6 @@ header:
   - 'templates/**'
   - 'docs/**'
   - 'uv.lock'
+  - 'src/grafana_dashboards/**'
+  - 'src/grafana_dashboards/**'
   comment: on-failure
