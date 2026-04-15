@@ -35,8 +35,8 @@ def wgdb_path(tmp_path_factory, monkeypatch):
 @pytest.fixture(autouse=True)
 def mock_network(monkeypatch):
     monkeypatch.setattr(network, "get_router_id", lambda: "172.16.0.0")
-    monkeypatch.setattr(network, "get_network_interface", lambda: "eth0")
     monkeypatch.setattr(network, "get_mtu", lambda _: 1500)
+    monkeypatch.setattr(network, "get_network_interface", lambda _: "eth0")
 
 
 @pytest.fixture(autouse=True)
