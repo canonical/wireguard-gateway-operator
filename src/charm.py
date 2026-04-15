@@ -26,6 +26,7 @@ WGDB_DIR = pathlib.Path("/opt/wireguard-gateway/")
 WIREGUARD_ROUTER_PROVIDER_RELATION = "wireguard-router-a"
 WIREGUARD_ROUTER_REQUIRER_RELATION = "wireguard-router-b"
 GATEWAY_PEERS_RELATION = "gateway-peers"
+WIREGUARD_NETWORK_OVERHEAD = 80
 
 
 class InvalidRelationDataError(Exception):
@@ -453,7 +454,10 @@ class Charm(ops.CharmBase):
         """
         real_mtu = None
         for unit in relation.remote_data:
-            network_mtu = network.get_mtu(ipaddress.ip_address(unit.ingress_address)) - 80
+            network_mtu = (
+                network.get_mtu(ipaddress.ip_address(unit.ingress_address))
+                - WIREGUARD_NETWORK_OVERHEAD
+            )
             real_mtu = network_mtu if real_mtu is None or real_mtu > network_mtu else real_mtu
         relation.set_mtu(real_mtu)
         peer_relation = self.model.get_relation(GATEWAY_PEERS_RELATION)

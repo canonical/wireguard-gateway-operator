@@ -133,9 +133,7 @@ def test_mtu(juju: jubilant.Juju):
         assert wg_interfaces_output
         wg_interfaces = wg_interfaces_output.split()
         for iface in wg_interfaces:
-            link_info = json.loads(
-                juju.exec(f"ip -j link show {iface}", unit=unit).stdout
-            )
+            link_info = json.loads(juju.exec(f"ip -j link show {iface}", unit=unit).stdout)
             iface_mtu = link_info[0]["mtu"]
             logger.info(f"unit {unit} WireGuard interface {iface} mtu={iface_mtu}")
             all_mtus.add(iface_mtu)
