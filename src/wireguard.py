@@ -208,6 +208,7 @@ def wireguard_syncconf(interface: wgdb.WireguardLink, is_provider: bool) -> None
         input=_wg_config(interface, is_provider=is_provider, quick=False).encode("ascii"),
     )
     if interface.mtu is not None:
+        # update the MTU of the WireGuard interface
         subprocess.check_output(
             ["ip", "link", "set", interface.interface_name, "mtu", str(interface.mtu)]  # nosec # noqa: S607
         )
