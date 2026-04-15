@@ -464,11 +464,10 @@ class Charm(ops.CharmBase):
         # announce the real network MTU across all relations
         relation.set_mtu(real_mtu)
         peer_relation = self.model.get_relation(GATEWAY_PEERS_RELATION)
-        if peer_relation:
-            if real_mtu is not None:
-                peer_relation.data[self.unit]["mtu"] = str(real_mtu)
-            else:
-                peer_relation.data[self.unit].pop("mtu", None)
+        if peer_relation and real_mtu is not None:
+            peer_relation.data[self.unit]["mtu"] = str(real_mtu)
+        elif peer_relation:
+            peer_relation.data[self.unit].pop("mtu", None)
 
         # select the minimum MTU across all units integrated with the relation as the actual MTU
         # value to be applied to the WireGuard instances
