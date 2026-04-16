@@ -99,9 +99,9 @@ def _wg_showconf(name: str) -> wgdb.WireguardLink:
     # Derive the public key from the private key instead ,the public key is deterministically
     # derived.
     public_key = generate_public_key(private_key)
-    link_out = subprocess.check_output(  # nosec
-        ["ip", "-j", "link", "show", name],
-        encoding="utf-8",  # noqa: S607
+    link_out = subprocess.check_output(
+        ["ip", "-j", "link", "show", name],  # nosec # noqa: S607
+        encoding="utf-8",
     )
     mtu = json.loads(link_out)[0]["mtu"]
     return wgdb.WireguardLink.model_validate(
