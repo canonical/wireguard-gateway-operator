@@ -10,6 +10,8 @@ from ops import testing
 
 import charm
 import wgdb
+from charm import WIREGUARD_NETWORK_OVERHEAD
+from tests.unit.conftest import DEFAULT_MTU
 from tests.unit.helpers import (
     AssertRelationData,
     example_private_key,
@@ -587,10 +589,10 @@ def test_mtu_set_in_relation_and_wgdb():
     state_out = ctx.run(ctx.on.config_changed(), state_in)
     local_unit_data = state_out.get_relation(relation.id).local_unit_data
     assert_relation = AssertRelationData(local_unit_data)
-    assert assert_relation.data.mtu == 1420
+    assert assert_relation.data.mtu == DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD
     db = load_wgdb()
     for link in db.list_link(owner=1):
-        assert link.mtu == 1420
+        assert link.mtu == DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD
 
 
 def test_mtu_picks_minimum_across_remote_units(monkeypatch):
@@ -604,7 +606,7 @@ def test_mtu_picks_minimum_across_remote_units(monkeypatch):
     import network
 
     mtu_map = {
-        ipaddress.ip_address("172.16.0.1"): 1500,
+        ipaddress.ip_address("172.16.0.1"): DEFAULT_MTU,
         ipaddress.ip_address("172.16.0.2"): 1400,
     }
     monkeypatch.setattr(network, "get_mtu", lambda addr: mtu_map[addr])
@@ -627,10 +629,10 @@ def test_mtu_picks_minimum_across_remote_units(monkeypatch):
     state_out = ctx.run(ctx.on.config_changed(), state_in)
     local_unit_data = state_out.get_relation(relation.id).local_unit_data
     assert_relation = AssertRelationData(local_unit_data)
-    assert assert_relation.data.mtu == 1320
+    assert assert_relation.data.mtu == 1400 - WIREGUARD_NETWORK_OVERHEAD
     db = load_wgdb()
     for link in db.list_link(owner=1):
-        assert link.mtu == 1320
+        assert link.mtu == 1400 - WIREGUARD_NETWORK_OVERHEAD
 
 
 def test_mtu_considers_peer_relation():
@@ -660,9 +662,9 @@ def test_mtu_considers_peer_relation():
     state_out = ctx.run(ctx.on.config_changed(), state_in)
     local_unit_data = state_out.get_relation(router_relation.id).local_unit_data
     assert_relation = AssertRelationData(local_unit_data)
-    assert assert_relation.data.mtu == 1420
+    assert assert_relation.data.mtu == DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD
     peer_data = state_out.get_relation(peer_relation.id).local_unit_data
-    assert peer_data["mtu"] == "1420"
+    assert peer_data["mtu"] == str(DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD)
     db = load_wgdb()
     for link in db.list_link(owner=1):
         assert link.mtu == 1200
@@ -691,4 +693,4 @@ def test_mtu_written_to_peer_relation():
     state_in = testing.State(relations=[router_relation, peer_relation], config=BASIC_CONFIG)
     state_out = ctx.run(ctx.on.config_changed(), state_in)
     peer_data = state_out.get_relation(peer_relation.id).local_unit_data
-    assert peer_data["mtu"] == "1420"
+    assert peer_data["mtu"] == str(DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD)
