@@ -18,6 +18,7 @@ from tests.unit.helpers import example_public_key
 
 DEFAULT_MTU = 1500
 
+
 @pytest.fixture(autouse=True)
 def mock_systemd(monkeypatch):
     monkeypatch.setattr(systemd, "service_enable", lambda _: None)
