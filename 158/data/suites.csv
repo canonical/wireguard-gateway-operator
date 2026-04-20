@@ -1,0 +1,27 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+    arrange: set the wireguard-a VIPs configuration.
+    act: read the keepalived configuration and determine the expected network interface.
+    assert: verify that keepalived used network interface.
+    ","3502","test_keepalived_interface","tests.integration","2026-04-20","passed","2026-04-20","","test_charm","",""
+"","72048","test_bird_metrics","tests.integration","2026-04-20","passed","2026-04-20","","test_charm","",""
+"
+    arrange: get the status of the deployment.
+    act: wait for bird routes to be propagated.
+    assert: verify that bird routes are established with correct nexthops on both sides.
+    ","13152","test_route_table","tests.integration","2026-04-20","passed","2026-04-20","","test_charm","",""
+"
+    arrange: configure vips and ip addresses on test and wireguard units.
+    act: add routes and execute ping commands between test units.
+    assert: verify success of ping commands to confirm routing.
+    ","5934","test_routing","tests.integration","2026-04-20","passed","2026-04-20","","test_charm","",""
+"
+    arrange: deploy two ubuntu units and two wireguard-gateway applications.
+    act: integrate the two wireguard-gateway applications.
+    assert: wait for all units to be active.
+    ","297181","test_charm","tests.integration","2026-04-20","passed","2026-04-20","","test_charm","",""
+"
+    arrange: set different MTUs on eth0 of one unit from each application.
+    act: trigger reconfiguration and wait for active status.
+    assert: verify wireguard interfaces on all units have the same MTU.
+    ","12076","test_mtu","tests.integration","2026-04-20","passed","2026-04-20","","test_charm","",""
