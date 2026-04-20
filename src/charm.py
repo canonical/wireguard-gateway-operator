@@ -16,6 +16,7 @@ from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 
 import bird
 import keepalived
+import network
 import relations
 import wgdb
 import wireguard
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 WGDB_DIR = pathlib.Path("/opt/wireguard-gateway/")
 WIREGUARD_ROUTER_PROVIDER_RELATION = "wireguard-router-a"
 WIREGUARD_ROUTER_REQUIRER_RELATION = "wireguard-router-b"
+GATEWAY_PEERS_RELATION = "gateway-peers"
+WIREGUARD_NETWORK_OVERHEAD = 80
 
 
 class InvalidRelationDataError(Exception):
@@ -51,13 +54,13 @@ def join_host_port(host: str, port: int) -> str:
     try:
         ip = ipaddress.ip_address(h)
     except ValueError:
-        # it's domain name
+        # it's a domain name
         return f"{h}:{port}"
     else:
         if ip.version == 6:
-            # it's a ipv6 address
+            # it's an IPv6 address
             return f"[{h}]:{port}"
-        # it's a ipv4 address
+        # it's an IPv4 address
         return f"{h}:{port}"
 
 
@@ -83,6 +86,7 @@ class Charm(ops.CharmBase):
         self.framework.observe(self.on.upgrade_charm, self.reconcile)
         self.framework.observe(self.on.update_status, self.reconcile)
         for relation in [
+            GATEWAY_PEERS_RELATION,
             WIREGUARD_ROUTER_PROVIDER_RELATION,
             WIREGUARD_ROUTER_REQUIRER_RELATION,
         ]:
@@ -92,7 +96,7 @@ class Charm(ops.CharmBase):
             self.framework.observe(self.on[relation].relation_broken, self.reconcile)
 
     def _create_wgdb(self) -> wgdb.WireguardDb:
-        """Create WireGuard database if not exists."""
+        """Create WireGuard database if it does not exist."""
         file = WGDB_DIR / f"{self.unit.name.replace('/', '-')}.json"
         file.parent.mkdir(parents=True, exist_ok=True)
         return wgdb.WireguardDb(file=file)
@@ -117,7 +121,7 @@ class Charm(ops.CharmBase):
                 prefixes.append(ipaddress.ip_network(prefix, strict=False))
             except ValueError:
                 raise InvalidConfigError(
-                    f"invalid advertise-prefixes: '{prefix}' is not a ipv4 or ipv6 prefix"
+                    f"invalid advertise-prefixes: '{prefix}' is not an IPv4 or IPv6 prefix"
                 )
         if not prefixes:
             raise InvalidConfigError("no advertise-prefixes configured")
@@ -202,7 +206,7 @@ class Charm(ops.CharmBase):
                         self._reconcile_relation(relation, is_provider=is_provider).remote_data
                     )
                 except InvalidRelationDataError:
-                    logger.exception("invalid relation date in relation id %s", relation.id)
+                    logger.exception("invalid relation data in relation id %s", relation.id)
                     invalid_relations.append(relation)
 
         removed_relations = [i for i in self._wgdb.list_owners() if i not in relation_is_provider]
@@ -234,6 +238,7 @@ class Charm(ops.CharmBase):
         self._relation_add_links(data)
         self._relation_update_links(data)
         self._relation_sync(data)
+        self._relation_update_mtu(data)
         return data
 
     def _relation_add_keys(self, relation: relations.WireguardRouterRelation) -> None:
@@ -249,7 +254,7 @@ class Charm(ops.CharmBase):
         for unit in relation.remote_data:
             # initiate new links
             for key in self._wgdb.list_keys(relation.id):
-                # requirer side don't initiate links
+                # requirer side doesn't initiate links
                 if not relation.is_provider:
                     continue
                 # if the key has been used in a link with that remote unit, skip it
@@ -258,7 +263,7 @@ class Charm(ops.CharmBase):
                     for peer_key in unit.public_keys
                 ):
                     continue
-                # try to find a peer key that had not yet been used in a link with myself
+                # try to find a peer key that has not yet been used in a link with this unit
                 # and then form a link with that key
                 for peer_key in unit.public_keys:
                     if any(
@@ -442,8 +447,57 @@ class Charm(ops.CharmBase):
             ]
         )
 
+    def _relation_update_mtu(self, relation: relations.WireguardRouterRelation) -> None:
+        """Update MTU for a relation based on the MTU to all remote endpoints.
+
+        The MTU is set to the minimum of:
+          - The MTU to each remote endpoint address (minus 80 bytes for WireGuard overhead).
+          - The MTU values published by peer units in the peer relation databag.
+          - The MTU values published by remote units in the router relation databag.
+
+        If no MTU values can be determined, the MTU is set to None.
+
+        Args:
+            relation: The WireGuard router relation.
+        """
+        # determine the real network MTU for this relation
+        real_mtu = None
+        for unit in relation.remote_data:
+            network_mtu = (
+                network.get_mtu(ipaddress.ip_address(unit.ingress_address))
+                - WIREGUARD_NETWORK_OVERHEAD
+            )
+            real_mtu = network_mtu if real_mtu is None or real_mtu > network_mtu else real_mtu
+
+        # announce the real network MTU across all relations
+        relation.set_mtu(real_mtu)
+        peer_relation = self.model.get_relation(GATEWAY_PEERS_RELATION)
+        if peer_relation and real_mtu is not None:
+            peer_relation.data[self.unit]["mtu"] = str(real_mtu)
+        elif peer_relation:
+            peer_relation.data[self.unit].pop("mtu", None)
+
+        # select the minimum MTU across all units integrated with the relation as the actual MTU
+        # value to be applied to the WireGuard instances
+        mtus: list[int] = [real_mtu] if real_mtu else []
+        if peer_relation:
+            for unit in peer_relation.units:
+                peer_mtu = peer_relation.data[unit].get("mtu")
+                if peer_mtu is not None:
+                    mtus.append(int(peer_mtu))
+        for unit in relation.remote_data:
+            if unit.mtu is not None:
+                mtus.append(unit.mtu)
+        mtu = min(mtus) if mtus else None
+        for link in self._wgdb.list_link(relation.id, include_half_closed=True):
+            self._wgdb.set_link_mtu(
+                public_key=link.public_key,
+                peer_public_key=link.peer_public_key,
+                mtu=mtu,
+            )
+
     def _relation_removed(self, relation_id: int) -> None:
-        """Cleanup on relation broken."""
+        """Clean up on relation broken."""
         for key in self._wgdb.list_keys(relation_id):
             self._wgdb.retire_key(key.public_key)
 

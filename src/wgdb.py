@@ -73,6 +73,7 @@ class WireguardLink(pydantic.BaseModel):
     peer_public_key: str
     peer_endpoint: str | None = None
     peer_allowed_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network]
+    mtu: int | None = None
 
     @pydantic.field_validator("peer_allowed_ips", mode="before")
     @classmethod
@@ -150,7 +151,9 @@ class WireguardDb:
         """Save database to file atomically."""
         tmp_file = self.file.with_suffix(f".{secrets.token_urlsafe(8)}")
         tmp_file.touch(mode=0o600)
-        tmp_file.write_text(self._data.model_dump_json(indent=2), encoding="utf-8")
+        tmp_file.write_text(
+            self._data.model_dump_json(indent=2, exclude_none=True), encoding="utf-8"
+        )
         os.rename(tmp_file, self.file)
 
     def allocate_port(self, is_provider: bool) -> int:
@@ -468,6 +471,19 @@ class WireguardDb:
             if not (link.public_key == public_key and link.peer_public_key == peer_public_key)
         ]
         self._save()
+
+    def set_link_mtu(self, public_key: str, peer_public_key: str, mtu: int | None) -> None:
+        """Set the MTU for a link in the database.
+
+        Args:
+            public_key: The local public key.
+            peer_public_key: The peer's public key.
+            mtu: The MTU value to set, or None to clear it.
+        """
+        link = self._must_search_link(public_key, peer_public_key)
+        if link.mtu != mtu:
+            link.mtu = mtu
+            self._save()
 
     def update_link(
         self,

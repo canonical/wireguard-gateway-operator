@@ -10,6 +10,8 @@ from ops import testing
 
 import charm
 import wgdb
+from charm import WIREGUARD_NETWORK_OVERHEAD
+from tests.unit.conftest import DEFAULT_MTU
 from tests.unit.helpers import (
     AssertRelationData,
     example_private_key,
@@ -564,3 +566,131 @@ def test_charm_configure_bird_wireguard_keepalived(
             """
         ).strip()
     )
+
+
+def test_mtu_set_in_relation_and_wgdb():
+    """
+    arrange: create context with one remote unit.
+    act: run config_changed event.
+    assert: verify mtu is set to get_mtu() - 80 in local relation data and wgdb links.
+    """
+    ctx = testing.Context(charm.Charm)
+    relation = testing.Relation(
+        id=1,
+        endpoint=charm.WIREGUARD_ROUTER_PROVIDER_RELATION,
+        remote_units_data={
+            1: {
+                "ingress-address": "172.16.0.1",
+                "public-keys": example_public_key("remote1", 0),
+            },
+        },
+    )
+    state_in = testing.State(relations=[relation], config=BASIC_CONFIG)
+    state_out = ctx.run(ctx.on.config_changed(), state_in)
+    local_unit_data = state_out.get_relation(relation.id).local_unit_data
+    assert_relation = AssertRelationData(local_unit_data)
+    assert assert_relation.data.mtu == DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD
+    db = load_wgdb()
+    for link in db.list_link(owner=1):
+        assert link.mtu == DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD
+
+
+def test_mtu_picks_minimum_across_remote_units(monkeypatch):
+    """
+    arrange: create context with two remote units, mock get_mtu to return different values.
+    act: run config_changed event.
+    assert: verify mtu is set to the minimum get_mtu() - 80 across remote units.
+    """
+    import ipaddress
+
+    import network
+
+    mtu_map = {
+        ipaddress.ip_address("172.16.0.1"): DEFAULT_MTU,
+        ipaddress.ip_address("172.16.0.2"): 1400,
+    }
+    monkeypatch.setattr(network, "get_mtu", lambda addr: mtu_map[addr])
+    ctx = testing.Context(charm.Charm)
+    relation = testing.Relation(
+        id=1,
+        endpoint=charm.WIREGUARD_ROUTER_PROVIDER_RELATION,
+        remote_units_data={
+            1: {
+                "ingress-address": "172.16.0.1",
+                "public-keys": example_public_key("remote1", 0),
+            },
+            2: {
+                "ingress-address": "172.16.0.2",
+                "public-keys": example_public_key("remote2", 0),
+            },
+        },
+    )
+    state_in = testing.State(relations=[relation], config=BASIC_CONFIG)
+    state_out = ctx.run(ctx.on.config_changed(), state_in)
+    local_unit_data = state_out.get_relation(relation.id).local_unit_data
+    assert_relation = AssertRelationData(local_unit_data)
+    assert assert_relation.data.mtu == 1400 - WIREGUARD_NETWORK_OVERHEAD
+    db = load_wgdb()
+    for link in db.list_link(owner=1):
+        assert link.mtu == 1400 - WIREGUARD_NETWORK_OVERHEAD
+
+
+def test_mtu_considers_peer_relation():
+    """
+    arrange: create context with remote unit and peer relation with a peer unit that has lower mtu.
+    act: run config_changed event.
+    assert: verify relation databag has MTU from route while wgdb links have min MTU of all units.
+    """
+    ctx = testing.Context(charm.Charm)
+    router_relation = testing.Relation(
+        id=1,
+        endpoint=charm.WIREGUARD_ROUTER_PROVIDER_RELATION,
+        remote_units_data={
+            1: {
+                "ingress-address": "172.16.0.1",
+                "public-keys": example_public_key("remote1", 0),
+            },
+        },
+    )
+    peer_relation = testing.PeerRelation(
+        endpoint=charm.GATEWAY_PEERS_RELATION,
+        peers_data={
+            1: {"mtu": "1200"},
+        },
+    )
+    state_in = testing.State(relations=[router_relation, peer_relation], config=BASIC_CONFIG)
+    state_out = ctx.run(ctx.on.config_changed(), state_in)
+    local_unit_data = state_out.get_relation(router_relation.id).local_unit_data
+    assert_relation = AssertRelationData(local_unit_data)
+    assert assert_relation.data.mtu == DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD
+    peer_data = state_out.get_relation(peer_relation.id).local_unit_data
+    assert peer_data["mtu"] == str(DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD)
+    db = load_wgdb()
+    for link in db.list_link(owner=1):
+        assert link.mtu == 1200
+
+
+def test_mtu_written_to_peer_relation():
+    """
+    arrange: create context with remote unit and peer relation.
+    act: run config_changed event.
+    assert: verify mtu is written to the peer relation databag.
+    """
+    ctx = testing.Context(charm.Charm)
+    router_relation = testing.Relation(
+        id=1,
+        endpoint=charm.WIREGUARD_ROUTER_PROVIDER_RELATION,
+        remote_units_data={
+            1: {
+                "ingress-address": "172.16.0.1",
+                "public-keys": example_public_key("remote1", 0),
+            },
+        },
+    )
+    peer_relation = testing.PeerRelation(
+        endpoint=charm.GATEWAY_PEERS_RELATION,
+    )
+    state_in = testing.State(relations=[router_relation, peer_relation], config=BASIC_CONFIG)
+    state_out = ctx.run(ctx.on.config_changed(), state_in)
+    peer_data = state_out.get_relation(peer_relation.id).local_unit_data
+    assert peer_data["mtu"] == str(DEFAULT_MTU - WIREGUARD_NETWORK_OVERHEAD)
