@@ -11,7 +11,7 @@ How to contribute
    See `CONTRIBUTING.md <https://github.com/canonical/wireguard-gateway-operator/blob/main/CONTRIBUTING.md>`_
    for information on contributing to the source code. 
 
-Our documentation is hosted on `Read the Docs <https://documentation.ubuntu.com/wireguard-gateway-charm>`_ to enable collaboration.
+Our documentation is hosted on `Read the Docs <https://about.readthedocs.com/>`_ to enable collaboration.
 Please use the links on each documentation page to either
 directly change something you see that's wrong, ask a question, or make a suggestion
 about a potential change.
@@ -46,11 +46,7 @@ Some examples of valid AI assistance includes:
 * Checking that your contribution aligns with the Canonical style guide
 
 We have created instructions and tools that you can provide AI while preparing
-your contribution in `copilot-collections <https://github.com/canonical/copilot-collections>`_: 
-
-* `Documentation instructions <https://github.com/canonical/copilot-collections/tree/main/assets/instructions/documentation>`_
-* `Documentation skills <https://github.com/canonical/copilot-collections/tree/main/assets/skills>`_
-
+your contribution in `copilot-collections <https://github.com/canonical/copilot-collections>`_.
 While it isn't necessary to use ``copilot-collections`` while preparing your
 contribution, these files contain details about our documentation standards and
 practices that will help the AI avoid common pitfalls when interacting with our
