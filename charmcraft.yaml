@@ -45,10 +45,16 @@ parts:
 provides:
   wireguard-router-a:
     interface: wireguard_router
+  cos-agent:
+    interface: cos_agent
 
 requires:
   wireguard-router-b:
     interface: wireguard_router
+
+peers:
+  gateway-peers:
+    interface: wireguard_peers
 
 config:
   options:

@@ -16,6 +16,8 @@ import wgdb
 import wireguard
 from tests.unit.helpers import example_public_key
 
+DEFAULT_MTU = 1500
+
 
 @pytest.fixture(autouse=True)
 def mock_systemd(monkeypatch):
@@ -35,7 +37,8 @@ def wgdb_path(tmp_path_factory, monkeypatch):
 @pytest.fixture(autouse=True)
 def mock_network(monkeypatch):
     monkeypatch.setattr(network, "get_router_id", lambda: "172.16.0.0")
-    monkeypatch.setattr(network, "get_network_interface", lambda: "eth0")
+    monkeypatch.setattr(network, "get_mtu", lambda _: DEFAULT_MTU)
+    monkeypatch.setattr(network, "get_network_interface", lambda _: "eth0")
 
 
 @pytest.fixture(autouse=True)
