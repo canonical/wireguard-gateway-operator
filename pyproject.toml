@@ -17,16 +17,16 @@ dependencies = [
   "charmlibs-apt>=1.0.0.post0",
   "charmlibs-systemd>=1.0.0",
   "jinja2==3.1.6",
-  "ops==3.6.0",
+  "ops==3.7.0",
   "pydantic>=2.12.5",
-  "cosl==1.4.0",
+  "cosl==1.9.1",
 ]
 
 [dependency-groups]
 fmt = [ "ruff" ]
 lint = [
   "codespell",
-  "jubilant==1.7.0",
+  "jubilant==1.8.0",
   "mypy",
   "pep8-naming",
   "pytest",
