@@ -25,10 +25,7 @@ To begin, refer to the [Getting Started](docs/tutorial.md) tutorial for step-by-
 
 ### Basic operations
 
-The charm supports customization, including:
-- [Configuring `advertise-prefixes`](docs/how-to/config-advertise-prefixes.md)
-- [Configuring virtual IPs](docs/how-to/config-vips.md)
-- [Connecting to observability](docs/how-to/integrate-with-cos.md)
+The charm supports customization, including [connecting to observability](docs/how-to/integrate-with-cos.md).
 
 ## Integrations
 
@@ -50,7 +47,7 @@ Apart from this required integration, the charm can be integrated with other Juj
 
 ## Learn more
 
-- [Read more](https://documentation.ubuntu.com/wireguard-gateway-charm/latest/)
+- [Charm documentation](https://documentation.ubuntu.com/wireguard-gateway-operator/latest/)
 - [Official webpage](https://www.wireguard.com/)
 - [Troubleshooting](https://matrix.to/#/#charmhub-charmdev:ubuntu.com)
 
