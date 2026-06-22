@@ -9,7 +9,7 @@
 [![Promote charm](https://github.com/canonical/wireguard-gateway-operator/actions/workflows/promote_charm.yaml/badge.svg)](https://github.com/canonical/wireguard-gateway-operator/actions/workflows/promote_charm.yaml)
 [![Discourse Status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fdiscourse.charmhub.io&style=flat&label=CharmHub%20Discourse)](https://discourse.charmhub.io)
 
-A [Juju](https://juju.is/) [charm](https://documentation.ubuntu.com/juju/3.6/reference/charm/) deploying a highly available, high-performance site-to-site VPN based on WireGuard.
+A [Juju](https://juju.is/) [charm](https://canonical.com/juju/docs/juju-cli/3.6/reference/charm/) deploying a highly available, high-performance site-to-site VPN based on WireGuard.
 
 Like any Juju charm, this charm supports one-line deployment, configuration, integration, scaling, and more. For the Charmed WireGuard gateway, this includes:
 
@@ -17,15 +17,15 @@ Like any Juju charm, this charm supports one-line deployment, configuration, int
 * Automatic route management and fault tolerance using OSPF on BIRD
 * Virtual redundant routing using VRRP on Keepalived
 
-For information about how to deploy, integrate, and manage this charm, see the official [WireGuard gateway documentation](https://documentation.ubuntu.com/wireguard-gateway-operator/latest/).
+For information about how to deploy, integrate, and manage this charm, see the official [WireGuard gateway documentation](https://canonical.com/juju/docs/wireguard-gateway-charm/).
 
 ## Get started
 
-To begin, refer to the [Getting Started](docs/tutorial.md) tutorial for step-by-step instructions.
+To begin, refer to the [Getting Started](https://canonical.com/juju/docs/wireguard-gateway-charm/latest/tutorial/) tutorial for step-by-step instructions.
 
 ### Basic operations
 
-The charm supports customization, including [connecting to observability](docs/how-to/integrate-with-cos.md).
+The charm supports customization, including [connecting to observability](https://canonical.com/juju/docs/wireguard-gateway-charm/latest/how-to/integrate-with-cos/).
 
 ## Integrations
 
@@ -47,9 +47,40 @@ Apart from this required integration, the charm can be integrated with other Juj
 
 ## Learn more
 
-- [Charm documentation](https://documentation.ubuntu.com/wireguard-gateway-operator/latest/)
+- [Charm documentation](https://canonical.com/juju/docs/wireguard-gateway-charm/)
 - [Official webpage](https://www.wireguard.com/)
 - [Troubleshooting](https://matrix.to/#/#charmhub-charmdev:ubuntu.com)
+
+## Documentation
+
+Our documentation is stored in the `docs` directory and
+can be viewed at https://canonical.com/juju/docs/wireguard-gateway-charm/.
+It is based on the Canonical Sphinx Stack and hosted on
+[Read the Docs](https://about.readthedocs.com/). In structuring, the
+documentation employs the [Diátaxis](https://diataxis.fr/) approach.
+
+You may open a pull request with your documentation changes, or you can
+[file a bug](https://github.com/canonical/wireguard-gateway-operator/issues) to
+provide constructive feedback or suggestions.
+
+To run the documentation locally before submitting your changes:
+
+```bash
+cd docs
+make run
+```
+
+GitHub runs automatic checks on the documentation to verify spelling, 
+validate links and style guide compliance.
+
+You can (and should) run the same checks locally:
+
+```bash
+make spelling
+make linkcheck
+make vale
+make lint-md
+```
 
 ## Project and community
 
