@@ -180,6 +180,7 @@ def wireguard_add(interface: wgdb.WireguardLink, is_provider: bool) -> None:
     while time.time() < deadline:
         if systemd.service_running(service_name):
             return
+        time.sleep(1)
     raise RuntimeError(f"failed to start {service_name} service")
 
 
