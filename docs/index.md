@@ -30,7 +30,7 @@ This charm will make operating highly available, high-performance site-to-site V
   - 
 * - **Get started**
   - {ref}`Deploy and peer two gateways <tutorial_index>`
-* - **Integrations**
+* - **Relations**
   - {ref}`WireGuard router peering <reference_integrations>` | {ref}`Integrate with COS <how_to_integrate_with_cos>`
 * - **Operations**
   - {ref}`Back up and restore <how_to_back_up_restore>` | {ref}`Upgrade <how_to_upgrade>`
