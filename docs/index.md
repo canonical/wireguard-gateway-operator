@@ -30,14 +30,12 @@ This charm will make operating highly available, high-performance site-to-site V
   - 
 * - **Get started**
   - {ref}`Deploy and peer two gateways <tutorial_index>`
-* - **Relations**
-  - {ref}`WireGuard router peering <reference_integrations>` | {ref}`Integrate with COS <how_to_integrate_with_cos>`
 * - **Operations**
-  - {ref}`Back up and restore <how_to_back_up_restore>` | {ref}`Upgrade <how_to_upgrade>`
+  - {ref}`Back up and restore <how_to_back_up_restore>` | {ref}`Actions <reference_actions>` | {ref}`Configurations <reference_configurations>` | {ref}`Upgrade <how_to_upgrade>`
+* - **Observability**
+  - {ref}`Integrate with COS <how_to_integrate_with_cos>` | {ref}`Metrics <reference_metrics>`
 * - **Design**
-  - {ref}`Charm architecture <reference_charm_architecture>`
-* - **Reference**
-  - {ref}`Actions <reference_actions>` | {ref}`Configurations <reference_configurations>` | {ref}`Metrics <reference_metrics>`
+  - {ref}`Charm architecture <reference_charm_architecture>` | {ref}`WireGuard router peering <reference_integrations>`
 * - **Security**
   - {ref}`Overview <explanation_security>`
 ```
