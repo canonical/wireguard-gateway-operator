@@ -22,10 +22,33 @@ This charm will make operating highly available, high-performance site-to-site V
 
 ## In this documentation
 
-|                                                                                                               |                                                                                                       |
-|---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| {ref}`Tutorial <tutorial_index>`</br>  Get started - a hands-on introduction to using the charm for new users </br> | {ref}`How-to guides <how_to>` </br> Step-by-step guides covering key operations and common tasks |
-| {ref}`Reference <reference>` </br> Technical information - specifications, APIs, architecture            | {ref}`Explanation <explanation>` </br> Concepts - discussion and clarification of key topics     |
+```{list-table}
+   :header-rows: 1
+   :widths: 15 30
+
+* - 
+  - 
+* - **Get started**
+  - {ref}`Deploy and peer two gateways <tutorial_index>`
+* - **Operations**
+  - {ref}`Back up and restore <how_to_back_up_restore>` | {ref}`Actions <reference_actions>` | {ref}`Configurations <reference_configurations>` | {ref}`Upgrade <how_to_upgrade>`
+* - **Observability**
+  - {ref}`Integrate with COS <how_to_integrate_with_cos>` | {ref}`Metrics <reference_metrics>`
+* - **Design**
+  - {ref}`Charm architecture <reference_charm_architecture>` | {ref}`WireGuard router peering <reference_integrations>`
+* - **Security**
+  - {ref}`Overview <explanation_security>`
+```
+
+## How this documentation is organized
+
+This documentation uses the
+[Diátaxis documentation structure](https://diataxis.fr/).
+
+* The {ref}`Tutorial <tutorial_index>` takes you step-by-step through deploying and peering two WireGuard gateway charms.
+* The {ref}`How-to guides <how_to>` cover practical tasks for integrating, maintaining, and upgrading your WireGuard gateway deployment.
+* {ref}`Reference <reference>` provides technical details on the charm's actions, configurations, integrations, metrics, and architecture.
+* {ref}`Explanation <explanation>` includes context and discussion of key topics, such as security.
 
 ## Contributing to this documentation
 
