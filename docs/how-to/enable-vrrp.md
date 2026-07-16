@@ -17,6 +17,8 @@ associated with the VIP address.
 For example, if you have the following WireGuard gateway deployment:
 
 ```{terminal}
+:output-only:
+
 Model           Controller  Cloud/Region         Version  SLA          Timestamp
 test-wireguard  lxd         localhost/localhost  3.6.25   unsupported  01:40:27+08:00
 
