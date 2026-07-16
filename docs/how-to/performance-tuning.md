@@ -1,3 +1,5 @@
+(how_to_performance_tuning)=
+
 # Performance tuning on multi-core CPUs
 
 A single WireGuard VPN tunnel does not scale very well on multi-core CPUs, as

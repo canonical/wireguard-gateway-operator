@@ -1,3 +1,5 @@
+(how_to_enable_vrrp)=
+
 # How to enable VRRP
 
 VRRP (Virtual Router Redundancy Protocol) is a network redundancy protocol that

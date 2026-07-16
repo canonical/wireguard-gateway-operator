@@ -1,3 +1,5 @@
+(how_to_decide_advertise_prefixes)=
+
 # How to decide the advertised-prefixes configuration value for your deployment
 
 The `advertised-prefixes` configuration of the WireGuard gateway charm
