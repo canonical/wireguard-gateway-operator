@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    "description lang=en": "Learn how to enable Virtual Router Redundancy Protocol for the WireGuard gateway charm."
+---
+
 (how_to_enable_vrrp)=
 
 # How to enable VRRP

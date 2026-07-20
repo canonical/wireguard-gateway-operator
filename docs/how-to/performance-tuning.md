@@ -1,6 +1,12 @@
+---
+myst:
+  html_meta:
+    "description lang=en": "Learn how to tune the performance of the WireGuard gateway charm on multi-core CPUs."
+---
+
 (how_to_performance_tuning)=
 
-# Performance tuning on multi-core CPUs
+# How to tune performance on multi-core CPUs
 
 A single WireGuard VPN tunnel does not scale very well on multi-core CPUs, as
 some of the WireGuard packet processing is done in a single thread. To improve
@@ -15,7 +21,7 @@ actually equal to `N(tunnels) x M(remote units)`. For this reason, we don't
 recommend setting the `tunnels` value too high when you have a multi-unit
 deployment.
 
-Some other things need to be considered for the `tunnels` setting. Due to the
+Due to the
 need for zero-downtime key rotation, the minimum number of tunnels is two, so
 there will always be at least one active tunnel. Also, if the two WireGuard
 deployments have different `tunnels` configurations, the effective number of

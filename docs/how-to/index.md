@@ -14,7 +14,7 @@ The following guides cover key processes and common tasks for managing and using
 :maxdepth: 1
 Decide the advertised-prefixes value <decide-advertise-prefixes.md>
 Enable VRRP <enable-vrrp.md>
-Performance tuning on multicore CPUs <performance-tuning.md>
+Tune performance on multicore CPUs <performance-tuning.md>
 Integrate with COS <integrate-with-cos.md>
 Back up and restore <back-up-restore.md>
 Upgrade <upgrade.md>
