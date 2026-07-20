@@ -21,8 +21,13 @@ actually equal to `N(tunnels) x M(remote units)`. For this reason, we don't
 recommend setting the `tunnels` value too high when you have a multi-unit
 deployment.
 
-Due to the
-need for zero-downtime key rotation, the minimum number of tunnels is two, so
-there will always be at least one active tunnel. Also, if the two WireGuard
-deployments have different `tunnels` configurations, the effective number of
-`tunnels` will be the lower of the two.
+For example, to set the `tunnels` configuration to `4`:
+
+```bash
+juju config wireguard-gateway tunnels=4
+```
+
+Due to the need for zero-downtime key rotation, the minimum number of tunnels is
+two, so there will always be at least one active tunnel. Also, if the two 
+WireGuard deployments have different `tunnels` configurations, the effective
+number of `tunnels` will be the lower of the two.

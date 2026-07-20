@@ -40,7 +40,12 @@ Machine  State    Address         Inst id        Base          AZ           Mess
 1        started  10.240.160.189  juju-40e6d0-1  ubuntu@24.04  work-laptop  Running
 ```
 
-You can set the `vips` configuration option to `10.240.160.111/24`, and then you
-should be able to access the WireGuard gateway using the VIP address. Traffic
-destined for the VIP will be routed to a healthy WireGuard gateway unit, thus
-providing high availability.
+You can set the `vips` configuration option to `10.240.160.111/24`:
+
+```bash
+juju config wireguard-gateway vips=10.240.160.111/24
+```
+
+After setting the option, you should be able to access the WireGuard gateway
+using the VIP address. Traffic destined for the VIP will be routed to a healthy
+WireGuard gateway unit, thus providing high availability.
