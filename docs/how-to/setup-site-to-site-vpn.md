@@ -1,28 +1,29 @@
 ---
 myst:
   html_meta:
-    "description lang=en": "Learn how to set the advertised-prefixes configuration for the WireGuard gateway charm."
+    "description lang=en": "Learn how to set up the WireGuard gateway charm as a site-to-site VPN."
 ---
 
-(how_to_decide_advertise_prefixes)=
+(how_to_setup_site_to_site_vpn)=
 
-# How to decide the advertised-prefixes configuration value for your deployment
+# How to setup WireGuard gateway charm as a site-to-site VPN
 
-The `advertise-prefixes` configuration of the WireGuard gateway charm
-represents what network this WireGuard gateway unit is adjacent to and knows how
-to route to.
+The primary use case for the WireGuard gateway charm is to connect two or more
+sites using a WireGuard VPN. The critical configuration for a site-to-site VPN
+is the advertise-prefix option. The `advertise-prefixes` configuration of the
+WireGuard gateway charm represents what network this WireGuard gateway unit is
+adjacent to and knows how to route to.
 
 For example, let's say we have two sites that need to be
 connected with the WireGuard gateway charm:
 
- * Site A network has the IP address `10.0.0.0/8`.
- * Site B has the network IP address `192.168.0.0/16`.
+* Site A network has the IP address `10.0.0.0/8`.
+* Site B has the network IP address `192.168.0.0/16`.
 
 Then the WireGuard gateway charm deployed on site A should have an
 `advertise-prefixes` value of `10.0.0.0/8`, and site B's instance of the
 WireGuard gateway charm should have an `advertise-prefixes` value of
 `192.168.0.0/16`:
-
 
 ```{mermaid}
 flowchart LR
