@@ -21,7 +21,7 @@ actually equal to `N(tunnels) x M(remote units)`. For this reason, we don't
 recommend setting the `tunnels` value too high when you have a multi-unit
 deployment.
 
-For example, to set the `tunnels` configuration to `4`:
+For example, to set the `tunnels` configuration to `4`, run:
 
 ```bash
 juju config wireguard-gateway tunnels=4
