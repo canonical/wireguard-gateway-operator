@@ -40,7 +40,9 @@ Machine  State    Address         Inst id        Base          AZ           Mess
 1        started  10.240.160.189  juju-40e6d0-1  ubuntu@24.04  work-laptop  Running
 ```
 
-You can set the `vips` configuration option to `10.240.160.111/24`:
+Then you can choose a VIP that's unused but within the charm unit's network
+range. For example, you can set the `vips` configuration option to
+`10.240.160.111/24`:
 
 ```bash
 juju config wireguard-gateway vips=10.240.160.111/24
