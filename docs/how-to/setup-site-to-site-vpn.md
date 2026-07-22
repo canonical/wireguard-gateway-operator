@@ -25,6 +25,11 @@ Then the WireGuard gateway charm deployed on site A should have an
 WireGuard gateway charm should have an `advertise-prefixes` value of
 `192.168.0.0/16`:
 
+```
+juju config wireguard-site-a advertise-prefixes=10.0.0.0/8
+juju config wireguard-site-b advertise-prefixes=192.168.0.0/16
+```
+
 ```{mermaid}
 flowchart LR
     siteA["Site A (Network: 10.0.0.0/8)"]
