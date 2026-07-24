@@ -31,7 +31,7 @@ This charm will make operating highly available, high-performance site-to-site V
 * - **Get started**
   - {ref}`Deploy and peer two gateways <tutorial_index>`
 * - **Operations**
-  - {ref}`Back up and restore <how_to_back_up_restore>` | {ref}`Actions <reference_actions>` | {ref}`Configurations <reference_configurations>` | {ref}`Upgrade <how_to_upgrade>` | {ref}`Enable VRRP <how_to_enable_vrrp>` | {ref}`Tune performance on multi-core CPUs <how_to_performance_tuning>` | {ref}`Set up a site-to-site VPN <how_to_setup_site_to_site_vpn>`
+  - {ref}`Enable VRRP <how_to_enable_vrrp>` | {ref}`Tune performance on multi-core CPUs <how_to_performance_tuning>` | {ref}`Set up a site-to-site VPN <how_to_setup_site_to_site_vpn>` | {ref}`Back up and restore <how_to_back_up_restore>` | {ref}`Actions <reference_actions>` | {ref}`Configurations <reference_configurations>` | {ref}`Upgrade <how_to_upgrade>`  
 * - **Observability**
   - {ref}`Integrate with COS <how_to_integrate_with_cos>` | {ref}`Metrics <reference_metrics>`
 * - **Design**
