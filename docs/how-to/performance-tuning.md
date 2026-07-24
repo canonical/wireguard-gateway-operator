@@ -17,7 +17,7 @@ The `tunnels` setting determines how many WireGuard tunnels will be created for
 each WireGuard gateway charm unit pair between any two units in the WireGuard
 integration. Because a WireGuard gateway charm deployment may have multiple
 units, the total number of tunnels that will be created on a WireGuard unit is
-actually equal to `N(tunnels) x M(remote units)`. For this reason, we don't
+equal to `N(tunnels) x M(remote units)`. For this reason, we don't
 recommend setting the `tunnels` value too high when you have a multi-unit
 deployment.
 

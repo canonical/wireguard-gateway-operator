@@ -6,11 +6,11 @@ myst:
 
 (how_to_setup_site_to_site_vpn)=
 
-# How to setup WireGuard gateway charm as a site-to-site VPN
+# How to set up WireGuard gateway charm as a site-to-site VPN
 
 The primary use case for the WireGuard gateway charm is to connect two or more
 sites using a WireGuard VPN. The critical configuration for a site-to-site VPN
-is the advertise-prefix option. The `advertise-prefixes` configuration of the
+is the  `advertise-prefixes` option. This configuration of the
 WireGuard gateway charm represents what network this WireGuard gateway unit is
 adjacent to and knows how to route to.
 
@@ -29,6 +29,8 @@ WireGuard gateway charm should have an `advertise-prefixes` value of
 juju config wireguard-site-a advertise-prefixes=10.0.0.0/8
 juju config wireguard-site-b advertise-prefixes=192.168.0.0/16
 ```
+
+Once the configurations are in place, the deployment setup will resemble the following diagram.
 
 ```{mermaid}
 flowchart LR
