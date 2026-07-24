@@ -12,6 +12,9 @@ The following guides cover key processes and common tasks for managing and using
 
 ```{toctree}
 :maxdepth: 1
+Set up a site-to-site VPN <setup-site-to-site-vpn.md>
+Enable VRRP <enable-vrrp.md>
+Tune performance on multicore CPUs <performance-tuning.md>
 Integrate with COS <integrate-with-cos.md>
 Back up and restore <back-up-restore.md>
 Upgrade <upgrade.md>
