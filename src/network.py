@@ -3,7 +3,6 @@
 
 """Network related functions."""
 
-import collections
 import ipaddress
 import json
 import subprocess  # nosec
@@ -73,21 +72,28 @@ def _get_network_interface(ip: ipaddress.IPv4Interface | ipaddress.IPv6Interface
         return None
 
 
-def get_network_interface(ips: list[ipaddress.IPv4Interface | ipaddress.IPv6Interface]) -> str:
-    """Get network interface associated with the given IPs.
+def get_network_interface(ip: ipaddress.IPv4Interface | ipaddress.IPv6Interface) -> str:
+    """Get network interface associated with the given IP.
+
+    Falls back to the interface of the default route of the same address family when no
+    interface is associated with the given IP.
+
+    Args:
+        ip: The IP address to look up.
 
     Return:
         Network interface name.
+
+    Raises:
+        RuntimeError: If no network interface can be determined.
     """
-    names: collections.Counter[str] = collections.Counter()
-    interfaces: list[str] = [name for name in map(_get_network_interface, ips) if name]
-    names.update(interfaces)
-    name = (
-        names.most_common(1)[0][0]
-        if names
-        # fallback to the default route if none are found for VIPs
-        else _get_network_interface(ipaddress.IPv4Interface("1.2.3.4/32"))
-    )
-    if not name:
-        raise RuntimeError("unable to get network interface")
-    return name
+    test_ips = [
+        ip,
+        ipaddress.IPv4Interface("1.2.3.4/32"),
+        ipaddress.IPv6Interface("2001:db8::1/128"),
+    ]
+    for test_ip in [i for i in test_ips if i.version == ip.version]:
+        interface = _get_network_interface(test_ip)
+        if interface:
+            return interface
+    raise RuntimeError("unable to get network interface")

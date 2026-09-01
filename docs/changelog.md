@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-09-01
+
+### Changed
+
+- Select the VRRP network interface per virtual IP address, so VIPs on different
+  network interfaces are each announced on their own interface.
+
 ## 2026-06-18
 
 - Migrated the RTD documentation URL under the Canonical domain.

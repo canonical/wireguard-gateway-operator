@@ -17,13 +17,13 @@ vrrp_script check_route_{{ loop.index0 }} {
 {% for vip in vips %}
 vrrp_instance vrrp_{{ loop.index0 }} {
   state BACKUP
-  interface {{ interface }}
+  interface {{ interface_map[vip] }}
   virtual_router_id {{ 1 + loop.index0 }}
   priority 127
   advert_int 1
 
   virtual_ipaddress {
-    {{ vip }} dev {{ interface }}
+    {{ vip }} dev {{ interface_map[vip] }}
   }
 }
 {% endfor %}
