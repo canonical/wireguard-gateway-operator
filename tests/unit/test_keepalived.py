@@ -60,6 +60,26 @@ def test_keepalived_config(monkeypatch):
     assert config == expected_config
 
 
+def test_keepalived_config_multiple_interfaces(monkeypatch):
+    """
+    arrange: define vips associated with different network interfaces.
+    act: call keepalived._keepalived_render_config.
+    assert: each vrrp instance uses the interface of its own vip.
+    """
+    interfaces = {
+        ipaddress.ip_interface("192.168.1.100/24"): "eth0",
+        ipaddress.ip_interface("10.0.0.100/24"): "eth1",
+    }
+    monkeypatch.setattr(keepalived.network, "get_network_interface", interfaces.__getitem__)
+
+    config = keepalived._keepalived_render_config(list(interfaces), [])
+
+    assert "  interface eth0\n" in config
+    assert "  interface eth1\n" in config
+    assert "192.168.1.100/24 dev eth0" in config
+    assert "10.0.0.100/24 dev eth1" in config
+
+
 def test_keepalived_reload_changed(monkeypatch, tmp_path):
     """
     arrange: create old config file and mock systemd (running).
