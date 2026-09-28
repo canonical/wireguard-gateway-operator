@@ -1,0 +1,27 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 5875bae
+_src_path: gh:canonical/platform-engineering-documentation-files.git
+author: Canonical Ltd.
+discourse: https://discourse.charmhub.io
+display_contributors: false
+docs_host: canonical.com
+github_url: https://github.com/canonical/wireguard-gateway-operator
+html_favicon: ''
+license_name: Apache-2.0
+license_url: https://github.com/canonical/wireguard-gateway-operator/blob/main/LICENSE
+linkcheck_timeout: 30
+llms_txt_description: This is the documentation for the WireGuard Gateway charm, a
+    Juju charm deploying and managing a highly available, high-performance site-to-site
+    VPN based on WireGuard.
+matrix: https://matrix.to/#/#charmhub-charmdev:ubuntu.com
+mattermost: ''
+new_domain: canonical.com/juju/docs/wireguard-gateway-charm
+ogp_image: https://assets.ubuntu.com/v1/cc828679-docs_illustration.svg
+old_domain: canonical-wireguard-gateway-charm.readthedocs-hosted.com
+product_page: charmhub.io/wireguard-gateway
+product_tag: ''
+project: WireGuard gateway charm
+repo_default_branch: main
+repo_folder: /docs/
+rtd_slug: juju/docs/wireguard-gateway-charm
+source_edit_link: https://github.com/canonical/wireguard-gateway-operator

@@ -16,6 +16,7 @@ header:
   - '**/*.md'
   - '**/*.txt'
   - '.readthedocs.yaml'
+  - '.copier-answers.yml'
   - '.jujuignore'
   - '.gitignore'
   - '.licenserc.yaml'
