@@ -19,7 +19,7 @@ dependencies = [
   "jinja2==3.1.6",
   "ops==3.8.3",
   "pydantic>=2.12.5",
-  "cosl==1.11.1",
+  "cosl==1.11.2",
 ]
 
 [dependency-groups]
