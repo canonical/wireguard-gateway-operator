@@ -16,7 +16,7 @@ A WireGuard gateway's core behavior is defined by a handful of charm configurati
 
 * [Set up a site-to-site VPN]
 * [Enable VRRP]
-* [Tune performance on multicore CPUs]
+* [Tune performance on multi-core CPUs]
 
 ## Operations and maintenance
 
@@ -30,7 +30,7 @@ Once a gateway is carrying traffic, keeping it healthy means watching its behavi
 <!--Links-->
 [Set up a site-to-site VPN]: setup-site-to-site-vpn.md
 [Enable VRRP]: enable-vrrp.md
-[Tune performance on multicore CPUs]: performance-tuning.md
+[Tune performance on multi-core CPUs]: performance-tuning.md
 [Integrate with COS]: integrate-with-cos.md
 [Back up and restore]: back-up-restore.md
 [Upgrade]: upgrade.md
@@ -41,7 +41,7 @@ Once a gateway is carrying traffic, keeping it healthy means watching its behavi
 
 Set up a site-to-site VPN <setup-site-to-site-vpn.md>
 Enable VRRP <enable-vrrp.md>
-Tune performance on multicore CPUs <performance-tuning.md>
+Tune performance on multi-core CPUs <performance-tuning.md>
 Integrate with COS <integrate-with-cos.md>
 Back up and restore <back-up-restore.md>
 Upgrade <upgrade.md>
