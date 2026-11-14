@@ -12,7 +12,7 @@ Operate the WireGuard gateway charm across its lifecycle, from shaping the VPN r
 
 ## Networking and VPN configuration
 
-A WireGuard gateway's core behavior is defined by a handful of charm configuration options that control which networks it routes to, how it fails over, and how much traffic it can sustain. Setting these correctly turns a deployed unit into a working, resilient tunnel endpoint.
+A WireGuard gateway's core behavior is defined by charm configuration options that control which networks it routes to, how it fails over, and how much traffic it can sustain. Setting these correctly turns a deployed unit into a working, resilient tunnel endpoint.
 
 ```{toctree}
 :hidden:
@@ -25,7 +25,7 @@ Tune performance on multi-core CPUs <performance-tuning.md>
 
 ## Operations and maintenance
 
-Once a gateway is carrying traffic, keeping it healthy means watching its behavior, recovering lost units, and adopting new revisions without interrupting service -- and, when you spot a gap, improving the guides that describe these tasks.
+Once a gateway is carrying traffic, keeping it healthy means watching its behavior, recovering lost units, adopting new revisions without interrupting service, and improving the guides that describe these tasks.
 
 ```{toctree}
 :hidden:
